@@ -1,0 +1,56 @@
+x-health: &default-healthcheck
+  interval: 10s
+  timeout: 30s
+  retries: 2
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fawapp-db
+    volumes:
+      - fawapp_postgresdb:/var/lib/postgresql/data
+      - ./db/init-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+      - ./db/data:/ini_data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: PGPASSWORD=fawapp_dev psql -h localhost -p 5432 -U fawapp_dev -d fawapp_db -c "select 1;" 2>&1 > /dev/null || exit 1
+      <<: *default-healthcheck
+    restart: always
+  app:
+    build: .
+    container_name: fawapp-app
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-config app/log_config.json
+    depends_on:
+      - db
+    expose:
+      - "8000"
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import http.client; conn = http.client.HTTPConnection('localhost', 8000); conn.request('GET', '/api/health-check'); response = conn.getresponse(); exit(1) if response.status != 200 else exit(0)" ]
+      <<: *default-healthcheck
+    volumes:
+      - .:/work
+    env_file:
+      - ./app/.env
+    restart: always
+  nginx:
+    image: nginx:alpine
+    container_name: fawapp-nginx
+    healthcheck:
+      test: curl http://localhost/nginx || exit 1
+      <<: *default-healthcheck
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    volumes:
+      - ./nginx/data/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/data/conf.d:/etc/nginx/conf.d/:ro
+    restart: always
+
+volumes:
+  fawapp_postgresdb:

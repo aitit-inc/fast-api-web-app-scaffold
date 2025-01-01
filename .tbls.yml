@@ -1,0 +1,8 @@
+# This is the configuration file for tbls.
+
+# Database connection string
+# dsn: mysql://dbuser:dbpass@localhost:3306/dbname
+dsn: postgresql://fawapp_dev:fawapp_dev@localhost:5432/fawapp_db?sslmode=disable
+
+# Output path of the document
+docPath: doc/db

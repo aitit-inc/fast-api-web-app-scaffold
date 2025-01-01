@@ -1,0 +1,8 @@
+asyncpg-stubs==0.30.0
+freezegun==1.5.1
+httpx==0.28.1
+mypy==1.14.0
+pydeps==2.0.1
+pylint==3.3.3
+pytest==8.3.4
+pytest-cov==6.0.0
