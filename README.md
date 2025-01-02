@@ -10,33 +10,36 @@ containerized development with Docker. Additionally, it provides tools for testi
 managing database schemas.
 
 - [How to run](#how-to-run)
-- [Run tests](#run-tests)
 - [Architecture](#architecture)
 - [Development](#development)
 - [Documentation](#documentation)
 
 ## How to run
 
+### Rquirements
+
+- Docker desktop, or Docker engine and docker-compose
+
+** Also, you should install python and python modules in requirements.txt and requirements.dev.txt for development.
+
+### Install and run the app
+
 ```bash
 # Start
-docker compose up -d
+bin/app.sh up --build -d
 
 # Migration
-docker compose exec app alembic upgrade head
+bin/app.sh exec app alembic upgrade head
 
 # Load seed data
-docker compose exec app python app/load_seeds.py
+bin/app.sh exec app python app/load_seeds.py
 
 # Stop
-docker compose down
+bin/app.sh down
 
 # Delete DB
 docker volume rm fast-api-web-app-scaffold_fawapp_postgresdb
 ```
-
-## Run tests
-
-TBD
 
 ## Architecture
 
@@ -89,13 +92,26 @@ pydeps app/main.py --reverse --max-bacon 3 -x sqlalchemy fastapi starlette fasta
 
 ## Development
 
+### Run tests
+
+You can run tests in isolated test DB environment.
+
+1. Start test DB on docker: `bin/test-db.sh`
+2. Run pytest on docker: `bin/test-app.sh run --rm test-app pytest --cov=app tests/ -vv`
+3. Stop test DB container: `bin/test-db.sh down`
+
+** The `bin/test-db.sh` script automatically stops the running container and removes the associated volume
+each time it is executed.
+This ensures test reproducibility by always starting from a clean environment.  
+Rest assured, this does not impact the development database container and volume in bin/app.sh in any way.
+
 ### Add/Modify DB tables
 
 1. Write/modify entity definitions using sqlmodel under app/domain/entities directory.
-2. Start DB container: `docker compose up -d`
+2. Start DB container: `bin/app.sh up -d`
 3. Generate migration script:
-   `docker compose exec app alembic revision --autogenerate -m "comment like add some tables"`
-4. Migrate: `docker compose exec app alembic upgrade head`
+   `bin/app.sh exec app alembic revision --autogenerate -m "comment like add some tables"`
+4. Migrate: `bin/app.sh exec app alembic upgrade head`
 
 ## Documentation
 

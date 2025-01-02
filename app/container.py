@@ -8,8 +8,6 @@ from app.infrastructure.config import config
 from app.infrastructure.database.database import Database
 from app.infrastructure.repositories.sample_item_in_db import \
     InDBSampleItemRepository
-from app.infrastructure.repositories.sample_item_in_memory import \
-    InMemorySampleItemRepository
 
 logger = logging.getLogger('uvicorn')
 
@@ -39,10 +37,7 @@ class Container(containers.DeclarativeContainer):
     )
 
     sample_item_factory = SampleItemFactory(get_now)
-    # sample_item_repository = providers.Factory(
-    #     InMemorySampleItemRepository,
-    #     factory=sample_item_factory,
-    # )
-    sample_item_repository = providers.Object(
-        InDBSampleItemRepository
+    sample_item_repository = providers.Factory(
+        InDBSampleItemRepository.factory,
+        get_now=get_now,
     )

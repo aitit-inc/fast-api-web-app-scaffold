@@ -10,15 +10,16 @@ services:
     volumes:
       - fawapp_postgresdb:/var/lib/postgresql/data
       - ./db/init-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
-      - ./db/data:/ini_data
     ports:
       - "5432:5432"
+    env_file:
+      - ./db/.env
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=postgres
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     healthcheck:
-      test: PGPASSWORD=fawapp_dev psql -h localhost -p 5432 -U fawapp_dev -d fawapp_db -c "select 1;" 2>&1 > /dev/null || exit 1
+      test: PGPASSWORD=${DB_PASSWORD} psql -h localhost -p 5432 -U ${DB_USER} -d ${DB_NAME} -c "select 1;" 2>&1 > /dev/null || exit 1
       <<: *default-healthcheck
     restart: always
   app:
@@ -34,8 +35,6 @@ services:
       <<: *default-healthcheck
     volumes:
       - .:/work
-    env_file:
-      - ./app/.env
     restart: always
   nginx:
     image: nginx:alpine

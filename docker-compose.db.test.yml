@@ -1,0 +1,19 @@
+services:
+  test-db:
+    image: postgres:16-alpine
+    container_name: fawapp-test-db
+    volumes:
+      - fawapp_test_postgresdb:/var/lib/postgresql/data
+      - ./db/init-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+    ports:
+      - "5433:5432"
+    env_file:
+      - ./db/.env.test
+  test-app:
+    build: .
+    container_name: fawapp-test-app
+    volumes:
+      - .:/work
+
+volumes:
+  fawapp_test_postgresdb:

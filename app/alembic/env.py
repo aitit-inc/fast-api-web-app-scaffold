@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import os
 import pkgutil
 from logging.config import fileConfig
 
@@ -8,7 +9,8 @@ from sqlalchemy.engine import Connection
 from sqlmodel import SQLModel
 
 import app.domain.entities as entities
-from app.infrastructure.config.config import get_settings
+from app.infrastructure.config.config import get_settings, \
+    get_settings_for_testing
 from app.infrastructure.database.database import Database
 
 # [NOTE] Need to import all models to generate migrations automatically
@@ -24,7 +26,9 @@ for loader, module_name, is_pkg in pkgutil.walk_packages(entities.__path__):
 config = context.config
 
 # app config
-settings = get_settings()
+USE_TEST_DB = os.getenv("USE_TEST_DB", "False") == "True"
+settings = get_settings_for_testing() if USE_TEST_DB else get_settings()
+print(f"USE_TEST_DB: {USE_TEST_DB}, DB_DSN: {settings.db_dsn}")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

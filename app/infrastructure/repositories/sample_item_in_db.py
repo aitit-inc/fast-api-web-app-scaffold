@@ -1,6 +1,7 @@
 """SampleItem repository in DB"""
+from datetime import datetime
 from logging import getLogger
-from typing import Sequence
+from typing import Sequence, Callable
 
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -21,9 +22,21 @@ logger = getLogger('uvicorn')
 class InDBSampleItemRepository(SampleItemRepository):
     """In-DB SampleItem repository."""
 
-    def __init__(self, db_session: AsyncSession):
+    @staticmethod
+    def factory(
+            get_now: Callable[[], datetime]
+    ) -> Callable[[AsyncSession], 'InDBSampleItemRepository']:
+        """Factory method."""
+        return lambda db_session: InDBSampleItemRepository(db_session, get_now)
+
+    def __init__(
+            self,
+            db_session: AsyncSession,
+            get_now: Callable[[], datetime],
+    ):
         """Constructor."""
         self._db_session = db_session
+        self._get_now = get_now
 
     async def get_list(
             self, filters: FiltersType = None) -> Page[SampleItem]:
@@ -83,10 +96,11 @@ class InDBSampleItemRepository(SampleItemRepository):
         existing_entity = await self.get_by_id(entity_id)
         if existing_entity:
             existing_entity.is_deleted = True
+            existing_entity.deleted_at = self._get_now()
             await self._db_session.merge(existing_entity)
             await self._db_session.flush()
         else:
-            logger.warning(f'Entity with ID {entity_id} does not exist.')
+            logger.warning('Entity with ID %s does not exist.', entity_id)
 
     async def delete(self, entity_id: int) -> None:
         """Delete the entity with the specified ID."""
@@ -94,4 +108,4 @@ class InDBSampleItemRepository(SampleItemRepository):
         if existing_entity:
             await self._db_session.delete(existing_entity)
         else:
-            logger.warning(f'Entity with ID {entity_id} does not exist.')
+            logger.warning('Entity with ID %s does not exist.', entity_id)

@@ -14,14 +14,13 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Settings for the app."""
     app_name: str = "FastAPI web app scaffold"
-
-    # TODO: Delete this.
     timezone_str: str = 'UTC'
 
     # db
     db_dsn: str = 'sqlite:///./test.db'
     echo_sql: bool = False
     init_db_on_startup: bool = False
+    seed_dir: str = './db/data/seed'
 
     # noinspection PyDataclass
     origins: list[str] = ['*']
@@ -32,18 +31,16 @@ class Settings(BaseSettings):
         """Get log level."""
         if self.log_level_str == 'DEBUG':
             return logging.DEBUG
-        elif self.log_level_str == 'INFO':
+        if self.log_level_str == 'INFO':
             return logging.INFO
-        elif self.log_level_str == 'WARNING':
+        if self.log_level_str == 'WARNING':
             return logging.WARNING
-        elif self.log_level_str == 'ERROR':
+        if self.log_level_str == 'ERROR':
             return logging.ERROR
-        elif self.log_level_str == 'CRITICAL':
+        if self.log_level_str == 'CRITICAL':
             return logging.CRITICAL
-        else:
-            raise ValueError(f'Invalid log level: {self.log_level_str}')
+        raise ValueError(f'Invalid log level: {self.log_level_str}')
 
-    # TODO: Delete this.
     @property
     def timezone(self) -> ZoneInfo:
         """Get timezone."""
@@ -63,3 +60,8 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get settings."""
     return Settings()
+
+
+def get_settings_for_testing() -> Settings:
+    """Get settings for testing."""
+    return Settings(_env_file='./app/.env.test')  # type: ignore

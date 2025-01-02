@@ -1,11 +1,12 @@
 """Common classes and functions for entities."""
 from typing import Any
 
-from sqlmodel import Column, DateTime, Field
+from sqlalchemy.types import DateTime
+from sqlmodel import Column, Field
 
 
 def DatetimeWithTimeZone(
-        nullable: bool=True,
+        nullable: bool = True,
         server_default: Any = None,
         onupdate: Any = None,
         *args: Any,
