@@ -1,18 +1,17 @@
 """SampleItem entity."""
 from datetime import datetime
 
+from pydantic import BaseModel
 from sqlalchemy.sql import func
 from sqlmodel import Field, SQLModel
 
-from app.domain.entities.common import DatetimeWithTimeZone
-
-MAX_LEN = 256
+from app.domain.entities.common import DatetimeWithTimeZone, MAX_LEN_SHORT
 
 
 class SampleItemBase(SQLModel):
     """SampleItem entity base class."""
     name: str = Field(
-        max_length=MAX_LEN, nullable=False,
+        max_length=MAX_LEN_SHORT, nullable=False,
         description='SampleItem name, description for pydantic and openapi',
         sa_column_kwargs={'comment': 'SampleItem name, comment for db'}
     )
@@ -26,21 +25,19 @@ class SampleItemBase(SQLModel):
 class SampleItem(SampleItemBase, table=True):
     """SampleItem entity."""
     __tablename__ = "sample_items"
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True, index=True)
 
-    is_deleted: bool | None = Field(default=False, nullable=False)
     created_at: datetime | None = DatetimeWithTimeZone(
-        server_default=func.now(),
+        server_default=func.now(),  # pylint: disable=not-callable
         nullable=False,
         default=None)
     updated_at: datetime | None = DatetimeWithTimeZone(
-        server_default=func.now(),
+        server_default=func.now(),  # pylint: disable=not-callable
         nullable=False,
         default=None,
-        onupdate=func.now())
-    deleted_at: datetime | None = DatetimeWithTimeZone(
-        nullable=True,
-        default=None, )
+        onupdate=func.now(),  # pylint: disable=not-callable
+    )
+    deleted_at: datetime | None = DatetimeWithTimeZone(default=None)
 
 
 class SampleItemCreate(SampleItemBase):
@@ -50,7 +47,6 @@ class SampleItemCreate(SampleItemBase):
 class SampleItemRead(SampleItemBase):
     """SampleItem entity read."""
     id: int
-    is_deleted: bool
     created_at: datetime
     updated_at: datetime | None = None
     deleted_at: datetime | None = None
@@ -58,5 +54,16 @@ class SampleItemRead(SampleItemBase):
 
 class SampleItemUpdate(SQLModel):
     """SampleItem entity update."""
-    name: str | None = Field(max_length=MAX_LEN, default=None)
+    name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
     description: str | None = None
+
+
+class SampleItemLengths(BaseModel):
+    """Value object to represent lengths of SampleItem fields."""
+    name_length: int
+    description_length: int
+
+
+class SampleItemWithMeta(SampleItemRead):
+    """SampleItem with meta."""
+    meta_data: SampleItemLengths

@@ -5,11 +5,12 @@ from sqlalchemy.types import DateTime
 from sqlmodel import Column, Field
 
 
+# pylint: disable=invalid-name
 def DatetimeWithTimeZone(
+        *args: Any,
         nullable: bool = True,
         server_default: Any = None,
         onupdate: Any = None,
-        *args: Any,
         **kwargs: Any,
 ) -> Any:
     """Datetime with timezone."""
@@ -20,3 +21,6 @@ def DatetimeWithTimeZone(
         onupdate=onupdate,
     )
     return Field(*args, **kwargs)
+
+
+MAX_LEN_SHORT = 256

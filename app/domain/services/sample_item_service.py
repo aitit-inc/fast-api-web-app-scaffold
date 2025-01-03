@@ -1,6 +1,5 @@
 """SampleItem service."""
-from app.domain.entities.sample_item import SampleItem
-from app.domain.value_objects.sample_item_lengths import SampleItemLengths
+from app.domain.entities.sample_item import SampleItem, SampleItemLengths
 
 
 # pylint: disable=too-few-public-methods

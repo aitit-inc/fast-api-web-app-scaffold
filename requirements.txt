@@ -3,6 +3,7 @@ asyncpg==0.30.0
 click==8.1.8
 colorlog==6.9.0
 dependency-injector==4.44.0
+email-validator==2.2.0
 fastapi==0.115.6
 fastapi-pagination==0.12.34
 psycopg2-binary==2.9.10

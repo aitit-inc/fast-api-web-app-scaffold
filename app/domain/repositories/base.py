@@ -2,27 +2,22 @@
 from abc import abstractmethod, ABC
 from typing import Generic, TypeVar, Any
 
-from fastapi_pagination import Page
+from sqlalchemy.sql.selectable import Select
 
 # A generic type variable representing the type of entities
+IdT = TypeVar('IdT')
 EntityT = TypeVar('EntityT')
 CreateT = TypeVar('CreateT')
 UpdateT = TypeVar('UpdateT')
-IdT = TypeVar('IdT')
 
 FiltersType = dict[str, Any] | None
 
 
 class AsyncBaseRepository(
-    ABC,
     Generic[IdT, EntityT, CreateT, UpdateT],
+    ABC
 ):
     """Async base repository interface for managing domain entities."""
-
-    @abstractmethod
-    async def get_list(
-            self, filters: FiltersType = None) -> Page[EntityT]:
-        """Retrieve a list of entities, optionally filtered by the given criteria."""
 
     @abstractmethod
     async def get_by_id(self, entity_id: IdT) -> EntityT | None:
@@ -43,3 +38,14 @@ class AsyncBaseRepository(
     @abstractmethod
     async def delete(self, entity_id: IdT) -> None:
         """Delete an entity by its ID"""
+
+
+class BaseQueryFactory(
+    Generic[EntityT],
+    ABC
+):
+    """Base query factory interface."""
+
+    @abstractmethod
+    def list_query(self, *args: Any, **kwargs: Any) -> Select[tuple[EntityT]]:
+        """Construct a SQL query for retrieving a list of entities."""

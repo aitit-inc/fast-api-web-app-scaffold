@@ -26,7 +26,7 @@ fi
 docker volume rm $VOLUME_NAME || true
 
 # Start test database container
-$DOCKER_COMPOSE_CMD up -d
+$DOCKER_COMPOSE_CMD up --build -d
 
 sleep 3
 

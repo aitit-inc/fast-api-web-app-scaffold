@@ -1,23 +1,44 @@
 """SampleItem list use case."""
-from typing import Coroutine, Any, Awaitable
-from fastapi_pagination import Page
+from typing import Sequence, Callable
 
-from app.application.use_cases.base import AsyncBaseUseCase
-from app.domain.entities.sample_item import SampleItem
-from app.domain.repositories.sample_item import SampleItemRepository
+from pydantic import TypeAdapter
+
+from app.application.use_cases.base import AsyncBaseListEntityUseCase, \
+    AsyncBaseListUseCase
+from app.domain.entities.sample_item import SampleItem, SampleItemCreate, \
+    SampleItemUpdate, SampleItemWithMeta
+from app.domain.services.sample_item_service import SampleItemService
 
 
-class SampleItemListUseCase(AsyncBaseUseCase[Page[SampleItem]]):
-    """SampleItem list use case."""
+class SampleItemListUseCase(
+    AsyncBaseListEntityUseCase[
+        int, SampleItem, SampleItemCreate, SampleItemUpdate]
+):
+    """SampleItem list use case implementation."""
 
-    def __init__(self, repository: SampleItemRepository) -> None:
-        """Constructor."""
-        self._repository = repository
 
-    async def __call__(
-            self,
-            *args: object,
-            **kwargs: object
-    ) -> Page[SampleItem]:
-        """Execute the use case."""
-        return await self._repository.get_list()
+class SampleItemWithMetaListUseCase(
+    AsyncBaseListUseCase[
+        SampleItemWithMeta, int, SampleItem,
+        SampleItemCreate, SampleItemUpdate,
+    ]
+):
+    """SampleItemWithMeta list use case implementation."""
+
+    @staticmethod
+    def transform(
+    ) -> Callable[[Sequence[SampleItem]], Sequence[SampleItemWithMeta]]:
+        def transformer(
+                xs: Sequence[SampleItem]) -> Sequence[SampleItemWithMeta]:
+            transformed_items: list[SampleItemWithMeta] = []
+            for item in xs:
+                lengths = SampleItemService.calculate_lengths(item)
+                merged = item.model_dump() | {
+                    'meta_data': lengths.model_dump()}
+                transformed_items.append(
+                    SampleItemWithMeta.model_validate(merged))
+
+            adapter = TypeAdapter(list[SampleItemWithMeta])
+            return adapter.validate_python(transformed_items)
+
+        return transformer

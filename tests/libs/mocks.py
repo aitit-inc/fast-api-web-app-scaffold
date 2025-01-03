@@ -15,7 +15,6 @@ def add_sample_item(
             id=kwargs.get('id') or None,
             name=kwargs.get('name') or 'Sample name',
             description=kwargs.get('description') or 'Sample description',
-            is_deleted=kwargs.get('is_deleted') or False,
             created_at=kwargs.get('created_at') or None,
             updated_at=kwargs.get('updated_at') or None,
             deleted_at=kwargs.get('deleted_at') or None,

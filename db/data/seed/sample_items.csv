@@ -1,4 +1,4 @@
-name,description,is_deleted,created_at,updated_at,deleted_at
-foo,foo description.,false,2025-01-01 13:32:15.000000,2025-01-01 13:32:17.000000,
-bar,bar description here.,false,2025-01-01 13:32:47.000000,2025-01-01 13:32:48.000000,
-baz,baz.,false,2025-01-01 13:33:10.000000,2025-01-01 13:33:12.000000,
+name,description,created_at,updated_at,deleted_at
+foo,foo description.,2025-01-01 13:32:15.000000,2025-01-01 13:32:17.000000,
+bar,bar description here.,2025-01-01 13:32:47.000000,2025-01-01 13:32:48.000000,
+baz,baz.,2025-01-01 13:33:10.000000,2025-01-01 13:33:12.000000,

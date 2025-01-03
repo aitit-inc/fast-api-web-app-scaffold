@@ -43,9 +43,10 @@ def client(
 
 
 def test_list_sample_items__verify_ok__returns_ok(
-        client_: TestClient) -> None:
+        client: TestClient,  # pylint: disable=redefined-outer-name
+) -> None:
     """Test list AI models."""
-    response = client_.get(f'{API_BASE}/sample-items')
+    response = client.get(f'{API_BASE}/sample-items')
     print(json.dumps(response.json(), indent=4, ensure_ascii=False))
     assert response.status_code == 200
     response_json = response.json()
@@ -53,7 +54,6 @@ def test_list_sample_items__verify_ok__returns_ok(
         response_json, datetime(2025, 1, 1, 0, 0, 0)) == {
                'items': [
                    {
-                       'is_deleted': False,
                        'name': 'Sample item 1',
                        'id': 1,
                        'updated_at': '2025-01-01T00:00:00',

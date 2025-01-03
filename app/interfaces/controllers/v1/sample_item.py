@@ -3,14 +3,15 @@ from typing import Callable
 
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
-from fastapi_pagination import Page
+from fastapi_pagination import Page, Params
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.sample_item.create import \
     SampleItemCreateUseCase
-from app.application.use_cases.sample_item.get import SampleItemWithMeta, \
-    SampleItemGetUseCase
-from app.application.use_cases.sample_item.list import SampleItemListUseCase
+from app.application.use_cases.sample_item.get import SampleItemGetUseCase, \
+    SampleItemWithMetaGetUseCase
+from app.application.use_cases.sample_item.list import SampleItemListUseCase, \
+    SampleItemWithMetaListUseCase
 from app.application.use_cases.sample_item.logical_delete import \
     SampleItemLogicalDeleteUseCase
 from app.application.use_cases.sample_item.physical_delete import \
@@ -18,8 +19,10 @@ from app.application.use_cases.sample_item.physical_delete import \
 from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
 from app.domain.entities.sample_item import SampleItem, SampleItemCreate, \
-    SampleItemRead, SampleItemUpdate
+    SampleItemRead, SampleItemUpdate, SampleItemWithMeta
 from app.domain.repositories.sample_item import SampleItemRepository
+from app.infrastructure.repositories.sample_item_in_db import \
+    InDBSampleItemQueryFactory
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -31,75 +34,73 @@ router = APIRouter(
 @router.get('/', responses={400: {'model': ErrorJsonResponse}})
 @inject
 async def sample_item(
+        with_meta: bool = False,
+        params: Params = Depends(),
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
-        repository_factory: Callable[
-            [AsyncSession], SampleItemRepository] = Depends(
-            Provide['sample_item_repository'])
-) -> Page[SampleItem]:
+) -> Page[SampleItem] | Page[SampleItemWithMeta]:
     """
     Retrieve a paginated list of SampleItem entities.
-
-    This GET endpoint uses the SampleItem repository and the
-    SampleItemListUseCase to fetch and return a paginated list of
-    SampleItem entities.
-
+    
+    This GET endpoint returns a paginated list of SampleItem entities,
+    optionally including metadata.
+    
     Args:
-        session_factory (Callable[[], AsyncSession]): An asynchronous
-            session factory for creating database sessions.
-            Injected as a dependency.
-        repository_factory (Callable[[AsyncSession], SampleItemRepository]):
-            A callable that initializes a SampleItemRepository instance 
-            using the provided database session. Injected as a dependency.
+        with_meta (bool): Whether to include metadata in the response.
+        params (Params): Pagination parameters. Injected as a dependency.
+        session_factory (Callable[[], AsyncSession]): Factory to create
+            database sessions. Injected as a dependency.
 
     Returns:
-        Page[SampleItem]: A paginated list of SampleItem entities.
+        Page[SampleItem] | Page[SampleItemWithMeta]: A paginated list of
+            SampleItem entities, with or without metadata.
     """
+    use_case_factory = SampleItemWithMetaListUseCase \
+        if with_meta else SampleItemListUseCase
+
     async with session_factory() as db_session:
         async with db_session.begin():
-            repository = repository_factory(db_session)
-
-            return await SampleItemListUseCase(
-                repository
-            )()
+            return await use_case_factory(
+                db_session,
+                InDBSampleItemQueryFactory(),
+            )(params=params)
 
 
 @router.get('/{entity_id}')
 @inject
 async def sample_item_by_id(
         entity_id: int,
+        with_meta: bool = False,
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
         repository_factory: Callable[
             [AsyncSession], SampleItemRepository] = Depends(
             Provide['sample_item_repository'])
-) -> SampleItemWithMeta:
+) -> SampleItem | SampleItemWithMeta:
     """
-    Retrieve a specific SampleItem entity by its ID.
-
-    This GET endpoint uses the SampleItem repository and the
-    SampleItemGetUseCase to fetch a single SampleItem entity,
-    along with its metadata, based on the provided item ID.
-
+    Fetch a specific SampleItem entity by its ID.
+    
     Args:
-        entity_id (int): The identifier of the SampleItem to retrieve.
-        session_factory (Callable[[], AsyncSession]): 
-            An asynchronous session factory 
-            for creating database sessions. Injected as a dependency.
+        entity_id (int): The ID of the SampleItem to retrieve.
+        with_meta (bool): Whether to include metadata in the response.
+        session_factory (Callable[[], AsyncSession]): Factory to create
+            database sessions. Injected as a dependency.
         repository_factory (Callable[[AsyncSession], SampleItemRepository]):
-            A callable that initializes a SampleItemRepository instance
-            using the provided database session. Injected as a dependency.
-
+            Factory to create a SampleItemRepository instance. Injected
+            as a dependency.
+    
     Returns:
-        SampleItemWithMeta: 
-            A data structure containing the fetched SampleItem entity 
-            along with its metadata.
+        SampleItem | SampleItemWithMeta: The fetched SampleItem entity,
+        optionally including metadata.
     """
+    use_case_factory = SampleItemWithMetaGetUseCase \
+        if with_meta else SampleItemGetUseCase
+
     async with session_factory() as db_session:
         async with db_session.begin():
             repository = repository_factory(db_session)
 
-            return await SampleItemGetUseCase(
+            return await use_case_factory(
                 repository
             )(entity_id)
 
