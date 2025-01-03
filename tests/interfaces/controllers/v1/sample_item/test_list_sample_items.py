@@ -24,7 +24,7 @@ def client(
         reset_tables(db_session)
         add_sample_item(
             db_session,
-            id=1, name='Sample item 1', description='1', )
+            id=1, uuid='dummy', name='Sample item 1', description='1', )
         db_session.commit()
 
     def cleanup() -> None:
@@ -54,8 +54,8 @@ def test_list_sample_items__verify_ok__returns_ok(
         response_json, datetime(2025, 1, 1, 0, 0, 0)) == {
                'items': [
                    {
+                       'uuid': 'dummy',
                        'name': 'Sample item 1',
-                       'id': 1,
                        'updated_at': '2025-01-01T00:00:00',
                        'deleted_at': None,
                        'created_at': '2025-01-01T00:00:00',

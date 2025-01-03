@@ -13,6 +13,7 @@ def add_sample_item(
     db_session.add(
         SampleItem(
             id=kwargs.get('id') or None,
+            uuid=kwargs.get('uuid') or None,
             name=kwargs.get('name') or 'Sample name',
             description=kwargs.get('description') or 'Sample description',
             created_at=kwargs.get('created_at') or None,
