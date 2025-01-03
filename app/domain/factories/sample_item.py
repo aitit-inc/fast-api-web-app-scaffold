@@ -2,6 +2,8 @@
 from datetime import datetime
 from typing import Callable
 
+from shortuuid import uuid
+
 from app.domain.entities.sample_item import SampleItem
 from app.domain.factories.base import BaseEntityFactory
 
@@ -22,6 +24,7 @@ class SampleItemFactory(BaseEntityFactory[SampleItem]):
         """Create a SampleItem instance."""
         return SampleItem(
             id=id_,
+            uuid=uuid(),
             name=name,
             description=description,
             created_at=self._get_now(),

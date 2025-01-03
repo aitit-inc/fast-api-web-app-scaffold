@@ -9,6 +9,7 @@ fastapi-pagination==0.12.34
 psycopg2-binary==2.9.10
 pydantic==2.10.4
 pydantic-settings==2.7.0
+shortuuid==1.0.13
 SQLAlchemy==2.0.36
 sqlmodel==0.0.22
 uvicorn==0.34.0

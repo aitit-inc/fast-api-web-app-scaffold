@@ -18,9 +18,11 @@ from app.application.use_cases.sample_item.physical_delete import \
     SampleItemPhysicalDeleteUseCase
 from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
-from app.domain.entities.sample_item import SampleItem, SampleItemCreate, \
-    SampleItemRead, SampleItemUpdate, SampleItemWithMeta
+from app.domain.entities.sample_item import SampleItemCreate, \
+    SampleItemRead, SampleItemUpdate, SampleItemReadWithMeta
 from app.domain.repositories.sample_item import SampleItemRepository
+from app.infrastructure.mappers.sample_item import \
+    sample_item_with_meta_to_read, sample_item_to_read
 from app.infrastructure.repositories.sample_item_in_db import \
     InDBSampleItemQueryFactory
 from app.interfaces.views.json_response import ErrorJsonResponse
@@ -38,7 +40,7 @@ async def sample_item(
         params: Params = Depends(),
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
-) -> Page[SampleItem] | Page[SampleItemWithMeta]:
+) -> Page[SampleItemReadWithMeta] | Page[SampleItemRead]:
     """
     Retrieve a paginated list of SampleItem entities.
     
@@ -52,17 +54,20 @@ async def sample_item(
             database sessions. Injected as a dependency.
 
     Returns:
-        Page[SampleItem] | Page[SampleItemWithMeta]: A paginated list of
+        Page[SampleItem] | Page[SampleItemReadWithMeta]: A paginated list of
             SampleItem entities, with or without metadata.
     """
     use_case_factory = SampleItemWithMetaListUseCase \
         if with_meta else SampleItemListUseCase
+    adapter = sample_item_with_meta_to_read \
+        if with_meta else sample_item_to_read
 
     async with session_factory() as db_session:
         async with db_session.begin():
             return await use_case_factory(
                 db_session,
                 InDBSampleItemQueryFactory(),
+                adapter_to_read=adapter,  # type: ignore
             )(params=params)
 
 
@@ -76,7 +81,7 @@ async def sample_item_by_id(
         repository_factory: Callable[
             [AsyncSession], SampleItemRepository] = Depends(
             Provide['sample_item_repository'])
-) -> SampleItem | SampleItemWithMeta:
+) -> SampleItemRead | SampleItemReadWithMeta:
     """
     Fetch a specific SampleItem entity by its ID.
     
@@ -90,18 +95,21 @@ async def sample_item_by_id(
             as a dependency.
     
     Returns:
-        SampleItem | SampleItemWithMeta: The fetched SampleItem entity,
+        SampleItem | SampleItemReadWithMeta: The fetched SampleItem entity,
         optionally including metadata.
     """
     use_case_factory = SampleItemWithMetaGetUseCase \
         if with_meta else SampleItemGetUseCase
+    adapter = sample_item_with_meta_to_read \
+        if with_meta else sample_item_to_read
 
     async with session_factory() as db_session:
         async with db_session.begin():
             repository = repository_factory(db_session)
 
             return await use_case_factory(
-                repository
+                repository,
+                adapter_to_read=adapter,  # type: ignore
             )(entity_id)
 
 

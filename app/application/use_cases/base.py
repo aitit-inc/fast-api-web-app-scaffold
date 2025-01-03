@@ -5,7 +5,7 @@ from typing import Generic, TypeVar, Any, Sequence, Callable
 
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exc import EntityNotFound
@@ -44,16 +44,17 @@ class AsyncBaseUseCase(Generic[T], ABC):
         """
 
 
-ReturnT = TypeVar('ReturnT')
+ReturnT = TypeVar('ReturnT', bound=BaseModel)
 IdT = TypeVar('IdT', int, str)
-EntityT = TypeVar('EntityT')
-CreateT = TypeVar('CreateT')
-UpdateT = TypeVar('UpdateT')
+EntityT = TypeVar('EntityT', bound=BaseModel)
+CreateT = TypeVar('CreateT', bound=BaseModel)
+UpdateT = TypeVar('UpdateT', bound=BaseModel)
 
 
 class AsyncBaseListUseCase(
     AsyncBaseUseCase[Page[ReturnT]],
-    Generic[ReturnT, IdT, EntityT, CreateT, UpdateT]
+    Generic[ReturnT, IdT, EntityT, CreateT, UpdateT],
+    ABC
 ):
     """Async list use case base class."""
 
@@ -61,10 +62,12 @@ class AsyncBaseListUseCase(
             self,
             db_session: AsyncSession,
             query_factory: BaseQueryFactory[EntityT],
+            adapter_to_read: Callable[[EntityT], ReturnT],
     ) -> None:
         """Constructor."""
         self._db_session = db_session
         self._query_factory = query_factory
+        self._adapter_to_read = adapter_to_read
 
     async def __call__(
             self,
@@ -76,29 +79,19 @@ class AsyncBaseListUseCase(
         return await paginate(  # type: ignore
             self._db_session,
             stmt,
-            transformer=self.transform(),
+            transformer=self.transformer(),
             params=params,
         )
 
-    @staticmethod
-    @abstractmethod
-    def transform() -> Callable[[Sequence[EntityT]], Sequence[ReturnT]]:
+    def transformer(self) -> Callable[[Sequence[EntityT]], Sequence[ReturnT]]:
         """Transform or process the retrieved entity."""
 
+        def _transformer(xs: Sequence[EntityT]) -> Sequence[ReturnT]:
+            transformed = [self._adapter_to_read(x) for x in xs]
+            adapter = TypeAdapter(list[ReturnT])
+            return adapter.validate_python(transformed)
 
-class AsyncBaseListEntityUseCase(
-    AsyncBaseListUseCase[EntityT, IdT, EntityT, CreateT, UpdateT],
-    Generic[IdT, EntityT, CreateT, UpdateT],
-):
-    """Async list use case base class."""
-
-    @staticmethod
-    def transform() -> Callable[[Sequence[EntityT]], Sequence[EntityT]]:
-        def transformer(xs: Sequence[EntityT]) -> Sequence[EntityT]:
-            adapter = TypeAdapter(list[EntityT])
-            return adapter.validate_python(xs)
-
-        return transformer
+        return _transformer
 
 
 class AsyncBaseGetUseCase(
@@ -111,11 +104,13 @@ class AsyncBaseGetUseCase(
     def __init__(
             self,
             repository: AsyncBaseRepository[
-                IdT, EntityT, CreateT, UpdateT
-            ]) -> None:
+                IdT, EntityT, CreateT, UpdateT],
+            adapter_to_read: Callable[[EntityT], ReturnT],
+    ) -> None:
         """Constructor."""
         self._repository: AsyncBaseRepository[
             IdT, EntityT, CreateT, UpdateT] = repository
+        self._adapter_to_read = adapter_to_read
 
     async def __call__(
             self,
@@ -131,22 +126,7 @@ class AsyncBaseGetUseCase(
                 detail=f'Entity with ID {entity_id} does not exist.'
             )
 
-        return self.transform(entity)
-
-    @abstractmethod
-    def transform(self, entity: EntityT) -> ReturnT:
-        """Transform or process the retrieved entity."""
-
-
-class AsyncBaseGetEntityUseCase(
-    AsyncBaseGetUseCase[EntityT, IdT, EntityT, CreateT, UpdateT],
-    Generic[IdT, EntityT, CreateT, UpdateT],
-):
-    """Async get entity use case base class."""
-
-    def transform(self, entity: EntityT) -> EntityT:
-        """Transform or process the retrieved entity."""
-        return entity
+        return self._adapter_to_read(entity)
 
 
 class AsyncBaseCreateUseCase(
