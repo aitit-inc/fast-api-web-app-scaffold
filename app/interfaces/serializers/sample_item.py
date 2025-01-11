@@ -4,60 +4,46 @@ from typing import Sequence
 
 from fastapi import Query
 from pydantic import TypeAdapter, Field
-from shortuuid import uuid
 
-from app.domain.entities.sample_item import SampleItemBase, \
-    SampleItemLengths, SampleItemCreate, SampleItem
+from app.application.dto.sample_item import SampleItemReadDto
+from app.domain.entities.sample_item import SampleItemLengths, SampleItem
 from app.domain.services.sample_item_service import SampleItemService
 from app.domain.value_objects.api_query import ApiListQuery
 from app.interfaces.serializers.base import ApiListQueryDtoBaseModel
 
 
-class SampleItemRead(SampleItemBase):
-    """SampleItem entity read."""
-    uuid: str
-    created_at: datetime
-    updated_at: datetime | None = None
-    deleted_at: datetime | None = None
-
-
-class SampleItemReadWithMeta(SampleItemRead):
+class SampleItemReadDtoWithMeta(SampleItemReadDto):
     """SampleItem with meta."""
     meta_data: SampleItemLengths
 
 
-def sample_item_from_create(data: SampleItemCreate) -> SampleItem:
-    """Create SampleItem from SampleItemCreate."""
-    data_dict = data.model_dump()
-    data_dict['uuid'] = uuid()
-    return SampleItem.model_validate(data_dict)
-
-
-def sample_item_to_read(data: SampleItem) -> SampleItemRead:
+# TODO: Delete
+def sample_item_to_read(data: SampleItem) -> SampleItemReadDto:
     """Read SampleItem from SampleItem."""
-    return SampleItemRead.model_validate(data)
+    return SampleItemReadDto.model_validate(data)
 
 
-def sample_item_with_meta_to_read(data: SampleItem) -> SampleItemReadWithMeta:
+def sample_item_with_meta_to_read(
+        data: SampleItem) -> SampleItemReadDtoWithMeta:
     """Read SampleItem with meta from SampleItem."""
     lengths = SampleItemService.calculate_lengths(data)
     merged = data.model_dump() | {'meta_data': lengths.model_dump()}
-    return SampleItemReadWithMeta.model_validate(merged)
+    return SampleItemReadDtoWithMeta.model_validate(merged)
 
 
 def sample_item_list_transformer(
-        xs: Sequence[SampleItem]) -> Sequence[SampleItemRead]:
+        xs: Sequence[SampleItem]) -> Sequence[SampleItemReadDto]:
     """Transform a list of SampleItems into SampleItemRead."""
     transformed = [sample_item_to_read(x) for x in xs]
-    adapter = TypeAdapter(list[SampleItemRead])
+    adapter = TypeAdapter(list[SampleItemReadDto])
     return adapter.validate_python(transformed)
 
 
 def sample_item_with_meta_list_transformer(
-        xs: Sequence[SampleItem]) -> Sequence[SampleItemReadWithMeta]:
+        xs: Sequence[SampleItem]) -> Sequence[SampleItemReadDtoWithMeta]:
     """Transform a list of SampleItems into SampleItemReadWithMeta."""
     transformed = [sample_item_with_meta_to_read(x) for x in xs]
-    adapter = TypeAdapter(list[SampleItemReadWithMeta])
+    adapter = TypeAdapter(list[SampleItemReadDtoWithMeta])
     return adapter.validate_python(transformed)
 
 

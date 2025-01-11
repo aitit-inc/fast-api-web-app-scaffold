@@ -44,16 +44,6 @@ class SampleItem(SampleItemBase, table=True):
     deleted_at: datetime | None = DatetimeWithTimeZone(default=None)
 
 
-class SampleItemCreate(SampleItemBase):
-    """SampleItem entity create."""
-
-
-class SampleItemUpdate(SQLModel):
-    """SampleItem entity update."""
-    name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
-    description: str | None = None
-
-
 class SampleItemLengths(BaseModel):
     """Value object to represent lengths of SampleItem fields."""
     name_length: int

@@ -7,6 +7,8 @@ from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.dto.sample_item import SampleItemUpdateDto, \
+    SampleItemCreate, SampleItemReadDto
 from app.application.use_cases.sample_item.create import \
     SampleItemCreateUseCase
 from app.application.use_cases.sample_item.get import SampleItemGetUseCase
@@ -18,14 +20,12 @@ from app.application.use_cases.sample_item.physical_delete import \
     SampleItemPhysicalDeleteUseCase
 from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
-from app.domain.entities.sample_item import SampleItemCreate, \
-    SampleItemUpdate
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
 from app.interfaces.serializers.sample_item import sample_item_to_read, \
     sample_item_with_meta_to_read, sample_item_list_transformer, \
-    sample_item_with_meta_list_transformer, SampleItemReadWithMeta, \
-    SampleItemRead, SampleItemApiListQueryDto, sample_item_from_create
+    sample_item_with_meta_list_transformer, SampleItemReadDtoWithMeta, \
+    SampleItemApiListQueryDto
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -44,7 +44,7 @@ async def sample_item(
             Provide['db_session_factory']),
         sample_item_query_factory: SampleItemQueryFactory = Depends(
             Provide['sample_item_query_factory']),
-) -> Page[SampleItemRead] | Page[SampleItemReadWithMeta]:
+) -> Page[SampleItemReadDto] | Page[SampleItemReadDtoWithMeta]:
     """
     Retrieve a paginated list of SampleItem entities.
 
@@ -62,7 +62,7 @@ async def sample_item(
             create SampleItemQuery instances. Injected as a dependency.
 
     Returns:
-        Page[SampleItem] | Page[SampleItemReadWithMeta]: A paginated list of
+        Page[SampleItem] | Page[SampleItemReadDtoWithMeta]: A paginated list of
             SampleItem entities, with or without metadata.
     """
     use_case = SampleItemListUseCase(sample_item_query_factory)
@@ -91,7 +91,7 @@ async def sample_item_by_id(
         repository_factory: Callable[
             [AsyncSession], SampleItemRepository] = Depends(
             Provide['sample_item_repository'])
-) -> SampleItemRead | SampleItemReadWithMeta:
+) -> SampleItemReadDto | SampleItemReadDtoWithMeta:
     """
     Fetch a specific SampleItem entity by its ID.
     
@@ -105,7 +105,7 @@ async def sample_item_by_id(
             as a dependency.
     
     Returns:
-        SampleItem | SampleItemReadWithMeta: The fetched SampleItem entity,
+        SampleItem | SampleItemReadDtoWithMeta: The fetched SampleItem entity,
         optionally including metadata.
     """
     adapter = sample_item_with_meta_to_read \
@@ -121,7 +121,7 @@ async def sample_item_by_id(
             return adapter(entity)
 
 
-@router.post('/', response_model=SampleItemRead,
+@router.post('/', response_model=SampleItemReadDto,
              status_code=201, )
 @inject
 async def create_sample_item(
@@ -131,7 +131,7 @@ async def create_sample_item(
         repository_factory: Callable[
             [AsyncSession], SampleItemRepository] = Depends(
             Provide['sample_item_repository'])
-) -> SampleItemRead:
+) -> SampleItemReadDto:
     """
     Create a new SampleItem entity.
 
@@ -149,31 +149,30 @@ async def create_sample_item(
             using the provided database session. Injected as a dependency.
 
     Returns:
-        SampleItemRead: The created SampleItem entity serialized into a
+        SampleItemReadDto: The created SampleItem entity serialized into a
             `SampleItemRead` format.
     """
     async with session_factory() as db_session:
         async with db_session.begin():
             repository = repository_factory(db_session)
 
-            entity = await SampleItemCreateUseCase(
-                repository
-            )(sample_item_from_create(data))
+            use_case = SampleItemCreateUseCase(repository)
+            read_data = await use_case(data)
 
-            return SampleItemRead.model_validate(entity)
+            return read_data
 
 
-@router.put('/{entity_id}', response_model=SampleItemRead)
+@router.put('/{entity_id}', response_model=SampleItemReadDto)
 @inject
 async def update_sample_item(
         entity_id: int,
-        data: SampleItemUpdate,
+        data: SampleItemUpdateDto,
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
         repository_factory: Callable[
             [AsyncSession], SampleItemRepository] = Depends(
             Provide['sample_item_repository'])
-) -> SampleItemRead:
+) -> SampleItemReadDto:
     """
     Update an existing SampleItem entity by its ID.
 
@@ -183,7 +182,7 @@ async def update_sample_item(
 
     Args:
         entity_id (int): The identifier of the SampleItem to be updated.
-        data (SampleItemUpdate):
+        data (SampleItemUpdateDto):
             The new data with which to update the SampleItem entity.
         session_factory (Callable[[], AsyncSession]):
             An asynchronous session factory
@@ -193,17 +192,18 @@ async def update_sample_item(
             using the provided database session. Injected as a dependency.
 
     Returns:
-        SampleItemRead: The updated SampleItem entity serialized into
+        SampleItemReadDto: The updated SampleItem entity serialized into
             a `SampleItemRead` format.
     """
     async with session_factory() as db_session:
         async with db_session.begin():
             repository = repository_factory(db_session)
-            entity = await SampleItemUpdateUseCase(
+            use_case = SampleItemUpdateUseCase(
                 repository
-            )(entity_id, data)
+            )
+            read_data = await use_case(entity_id, data)
 
-            return SampleItemRead.model_validate(entity)
+            return read_data
 
 
 @router.delete('/{entity_id}', status_code=204, )

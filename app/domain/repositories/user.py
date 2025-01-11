@@ -1,12 +1,12 @@
 """User repository interface."""
 from abc import ABC
 
-from app.domain.entities.user import User, UserUpdate
+from app.domain.entities.user import User
 from app.domain.repositories.base import AsyncBaseRepository
 
 
 class UserRepository(
-    AsyncBaseRepository[int, User, UserUpdate],
+    AsyncBaseRepository[int, User],
     ABC
 ):
     """User repository interface."""

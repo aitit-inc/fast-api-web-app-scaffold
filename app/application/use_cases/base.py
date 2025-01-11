@@ -5,6 +5,7 @@ from typing import Generic, TypeVar, Any
 
 from pydantic import BaseModel
 from sqlalchemy import Select
+from sqlmodel import SQLModel
 
 from app.application.exc import EntityNotFound
 from app.domain.repositories.base import BaseQueryFactory, \
@@ -46,9 +47,10 @@ class AsyncBaseUseCase(Generic[T], ABC):
 
 IdT = TypeVar('IdT', int, str)
 EntityT = TypeVar('EntityT', bound=BaseModel)
-UpdateT = TypeVar('UpdateT', bound=BaseModel)
+CreateT = TypeVar('CreateT', bound=BaseModel | SQLModel)
+ReturnT = TypeVar('ReturnT', bound=BaseModel | SQLModel)
 RepositoryT = TypeVar('RepositoryT', bound=AsyncBaseRepository[
-    IdT, EntityT, UpdateT])
+    IdT, EntityT])
 
 
 class BaseListUseCase(
@@ -100,8 +102,9 @@ class AsyncBaseGetUseCase(
 
 
 class AsyncBaseCreateUseCase(
-    AsyncBaseUseCase[EntityT],
-    Generic[IdT, EntityT, RepositoryT]
+    AsyncBaseUseCase[ReturnT],
+    Generic[EntityT, CreateT, ReturnT, RepositoryT],
+    ABC
 ):
     """Async create use case base class."""
 
@@ -114,11 +117,20 @@ class AsyncBaseCreateUseCase(
 
     async def __call__(
             self,
-            entity: EntityT,
+            dto: CreateT,
             *args: Any,
             **kwargs: Any,
-    ) -> EntityT:
+    ) -> ReturnT:
         """Execute the use case."""
-        created_entity: EntityT = await self._repository.add(entity)
+        entity = self._from_create_dto(dto)
+        created_entity = await self._repository.add(entity)
 
-        return created_entity
+        return self._to_return_dto(created_entity)
+
+    @abstractmethod
+    def _from_create_dto(self, dto: CreateT) -> EntityT:
+        """Convert a CreateDTO to an EntityT."""
+
+    @abstractmethod
+    def _to_return_dto(self, entity: EntityT) -> ReturnT:
+        """Convert an EntityT to a ReturnDTO."""

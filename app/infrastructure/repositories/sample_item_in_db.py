@@ -7,7 +7,8 @@ from sqlalchemy import select, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exc import EntityNotFound
-from app.domain.entities.sample_item import SampleItem, SampleItemUpdate
+from app.domain.entities.sample_item import SampleItem
+from app.domain.repositories.base import UpdateT
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
 from app.domain.value_objects.api_query import ApiListQuery
@@ -51,7 +52,7 @@ class InDBSampleItemRepository(SampleItemRepository):
         return entity
 
     async def update(self, entity_id: int,
-                     data: SampleItemUpdate) -> SampleItem:
+                     data: UpdateT) -> SampleItem:
         """Update an entity."""
         existing_entity = await self.get_by_id(entity_id)
         if not existing_entity:
