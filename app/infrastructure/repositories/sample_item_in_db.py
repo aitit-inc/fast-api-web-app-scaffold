@@ -7,12 +7,10 @@ from sqlalchemy import select, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exc import EntityNotFound
-from app.domain.entities.sample_item import SampleItem, SampleItemCreate, \
-    SampleItemUpdate
+from app.domain.entities.sample_item import SampleItem, SampleItemUpdate
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
 from app.domain.value_objects.api_query import ApiListQuery
-from app.infrastructure.mappers.sample_item import sample_item_from_create
 from app.infrastructure.repositories.base import InDBQueryFactoryTrait
 
 logger = getLogger('uvicorn')
@@ -45,9 +43,8 @@ class InDBSampleItemRepository(SampleItemRepository):
         result = await self._db_session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def add(self, data: SampleItemCreate) -> SampleItem:
+    async def add(self, entity: SampleItem) -> SampleItem:
         """Add an entity."""
-        entity = sample_item_from_create(data)
         self._db_session.add(entity)
         await self._db_session.flush()
         await self._db_session.refresh(entity)

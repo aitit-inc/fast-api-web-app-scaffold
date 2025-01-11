@@ -25,7 +25,7 @@ from app.domain.repositories.sample_item import SampleItemRepository, \
 from app.interfaces.serializers.sample_item import sample_item_to_read, \
     sample_item_with_meta_to_read, sample_item_list_transformer, \
     sample_item_with_meta_list_transformer, SampleItemReadWithMeta, \
-    SampleItemRead, SampleItemApiListQueryDto
+    SampleItemRead, SampleItemApiListQueryDto, sample_item_from_create
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -158,7 +158,7 @@ async def create_sample_item(
 
             entity = await SampleItemCreateUseCase(
                 repository
-            )(data)
+            )(sample_item_from_create(data))
 
             return SampleItemRead.model_validate(entity)
 

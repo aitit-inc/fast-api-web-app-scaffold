@@ -46,10 +46,9 @@ class AsyncBaseUseCase(Generic[T], ABC):
 
 IdT = TypeVar('IdT', int, str)
 EntityT = TypeVar('EntityT', bound=BaseModel)
-CreateT = TypeVar('CreateT', bound=BaseModel)
 UpdateT = TypeVar('UpdateT', bound=BaseModel)
 RepositoryT = TypeVar('RepositoryT', bound=AsyncBaseRepository[
-    IdT, EntityT, CreateT, UpdateT])
+    IdT, EntityT, UpdateT])
 
 
 class BaseListUseCase(
@@ -102,7 +101,7 @@ class AsyncBaseGetUseCase(
 
 class AsyncBaseCreateUseCase(
     AsyncBaseUseCase[EntityT],
-    Generic[IdT, EntityT, CreateT, RepositoryT]
+    Generic[IdT, EntityT, RepositoryT]
 ):
     """Async create use case base class."""
 
@@ -115,11 +114,11 @@ class AsyncBaseCreateUseCase(
 
     async def __call__(
             self,
-            data: CreateT,
+            entity: EntityT,
             *args: Any,
             **kwargs: Any,
     ) -> EntityT:
         """Execute the use case."""
-        entity: EntityT = await self._repository.add(data)
+        created_entity: EntityT = await self._repository.add(entity)
 
-        return entity
+        return created_entity

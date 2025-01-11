@@ -3,20 +3,20 @@ from abc import abstractmethod, ABC
 from typing import Generic, TypeVar, Any
 
 from sqlalchemy import Select
+from sqlmodel import SQLModel
 
 from app.domain.value_objects.api_query import ApiListQuery
 
 # A generic type variable representing the type of entities
-IdT = TypeVar('IdT')
-EntityT = TypeVar('EntityT')
-CreateT = TypeVar('CreateT')
+IdT = TypeVar('IdT', int, str)
+EntityT = TypeVar('EntityT', bound=SQLModel)
 UpdateT = TypeVar('UpdateT')
 
 FiltersType = dict[str, Any] | None
 
 
 class AsyncBaseRepository(
-    Generic[IdT, EntityT, CreateT, UpdateT],
+    Generic[IdT, EntityT, UpdateT],
     ABC
 ):
     """Async base repository interface for managing domain entities."""
@@ -26,7 +26,7 @@ class AsyncBaseRepository(
         """Retrieve an entity by its ID"""
 
     @abstractmethod
-    async def add(self, data: CreateT) -> EntityT:
+    async def add(self, entity: EntityT) -> EntityT:
         """Add an entity"""
 
     @abstractmethod

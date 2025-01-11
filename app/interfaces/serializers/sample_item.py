@@ -4,9 +4,10 @@ from typing import Sequence
 
 from fastapi import Query
 from pydantic import TypeAdapter, Field
+from shortuuid import uuid
 
 from app.domain.entities.sample_item import SampleItemBase, \
-    SampleItemLengths, SampleItem
+    SampleItemLengths, SampleItemCreate, SampleItem
 from app.domain.services.sample_item_service import SampleItemService
 from app.domain.value_objects.api_query import ApiListQuery
 from app.interfaces.serializers.base import ApiListQueryDtoBaseModel
@@ -23,6 +24,13 @@ class SampleItemRead(SampleItemBase):
 class SampleItemReadWithMeta(SampleItemRead):
     """SampleItem with meta."""
     meta_data: SampleItemLengths
+
+
+def sample_item_from_create(data: SampleItemCreate) -> SampleItem:
+    """Create SampleItem from SampleItemCreate."""
+    data_dict = data.model_dump()
+    data_dict['uuid'] = uuid()
+    return SampleItem.model_validate(data_dict)
 
 
 def sample_item_to_read(data: SampleItem) -> SampleItemRead:
