@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from sqlalchemy import Select
 
 from app.application.exc import EntityNotFound
-from app.domain.repositories.base import AsyncBaseRepository, \
-    BaseQueryFactory, ABCRepository
+from app.domain.repositories.base import BaseQueryFactory, \
+    AsyncBaseRepository
 from app.domain.value_objects.api_query import ApiListQuery
 
 T = TypeVar('T')
@@ -48,7 +48,8 @@ IdT = TypeVar('IdT', int, str)
 EntityT = TypeVar('EntityT', bound=BaseModel)
 CreateT = TypeVar('CreateT', bound=BaseModel)
 UpdateT = TypeVar('UpdateT', bound=BaseModel)
-RepositoryT = TypeVar('RepositoryT', bound=ABCRepository)
+RepositoryT = TypeVar('RepositoryT', bound=AsyncBaseRepository[
+    IdT, EntityT, CreateT, UpdateT])
 
 
 class BaseListUseCase(
@@ -101,18 +102,16 @@ class AsyncBaseGetUseCase(
 
 class AsyncBaseCreateUseCase(
     AsyncBaseUseCase[EntityT],
-    Generic[IdT, EntityT, CreateT, UpdateT]
+    Generic[IdT, EntityT, CreateT, RepositoryT]
 ):
     """Async create use case base class."""
 
     def __init__(
             self,
-            repository: AsyncBaseRepository[
-                IdT, EntityT, CreateT, UpdateT
-            ]) -> None:
+            repository: RepositoryT,
+    ) -> None:
         """Constructor."""
-        self._repository: AsyncBaseRepository[
-            IdT, EntityT, CreateT, UpdateT] = repository
+        self._repository: RepositoryT = repository
 
     async def __call__(
             self,
@@ -121,4 +120,6 @@ class AsyncBaseCreateUseCase(
             **kwargs: Any,
     ) -> EntityT:
         """Execute the use case."""
-        return await self._repository.add(data)
+        entity: EntityT = await self._repository.add(data)
+
+        return entity

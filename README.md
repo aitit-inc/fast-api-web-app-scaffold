@@ -95,6 +95,11 @@ pydeps ./app --rmprefix app. --reverse --max-bacon 3 --only app --max-module-dep
 If you want to check dependencies from each architecture layer to external libraries,
 execute the following command like:
 
+** **To simplify implementation, dependencies on sqlmodel, sqlalchemy, and pydantic are allowed  
+from the Domain and Application layer. The reason is that sqlmodel is a library that enables conversion  
+between pydantic models and SQLAlchemy models, allowing us to avoid defining almost identical data  
+classes in both the Domain and Infrastructure layers.**
+
 ```bash
 pydeps ./app --rmprefix app. --reverse --max-bacon 4 --cluster --max-module-depth=2 -o app_external.svg
 ```

@@ -15,32 +15,7 @@ UpdateT = TypeVar('UpdateT')
 FiltersType = dict[str, Any] | None
 
 
-class ABCRepository(ABC):
-    """Base repository interface for managing domain entities."""
-
-    @abstractmethod
-    async def get_by_id(self, *args: Any, **kwargs: Any) -> Any:
-        """Retrieve an entity by its ID"""
-
-    @abstractmethod
-    async def add(self, *args: Any, **kwargs: Any) -> Any:
-        """Add an entity"""
-
-    @abstractmethod
-    async def update(self, *args: Any, **kwargs: Any) -> Any:
-        """Update an entity"""
-
-    @abstractmethod
-    async def logical_delete(self, *args: Any, **kwargs: Any) -> None:
-        """Logical delete an entity by its ID"""
-
-    @abstractmethod
-    async def delete(self, *args: Any, **kwargs: Any) -> None:
-        """Delete an entity by its ID"""
-
-
 class AsyncBaseRepository(
-    ABCRepository,
     Generic[IdT, EntityT, CreateT, UpdateT],
     ABC
 ):
