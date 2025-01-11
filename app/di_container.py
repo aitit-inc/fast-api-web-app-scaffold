@@ -2,12 +2,13 @@
 import logging
 
 from dependency_injector import containers, providers
+from shortuuid import uuid
 
 from app.domain.factories.sample_item import SampleItemFactory
 from app.infrastructure.config import config
 from app.infrastructure.database.database import Database
 from app.infrastructure.repositories.sample_item_in_db import \
-    InDBSampleItemRepository
+    InDBSampleItemRepository, InDBSampleItemQueryFactory
 
 logger = logging.getLogger('uvicorn')
 
@@ -36,8 +37,12 @@ class Container(containers.DeclarativeContainer):
         db.provided.session,
     )
 
-    sample_item_factory = SampleItemFactory(get_now)
+    sample_item_factory = SampleItemFactory(get_now, uuid)
     sample_item_repository = providers.Factory(
         InDBSampleItemRepository.factory,
         get_now=get_now,
+    )
+
+    sample_item_query_factory = providers.Factory(
+        InDBSampleItemQueryFactory,
     )

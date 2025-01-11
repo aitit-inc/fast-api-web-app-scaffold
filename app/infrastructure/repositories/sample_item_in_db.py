@@ -9,10 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.exc import EntityNotFound
 from app.domain.entities.sample_item import SampleItem, SampleItemCreate, \
     SampleItemUpdate
-from app.domain.repositories.base import FiltersType
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
+from app.domain.value_objects.api_query import ApiListQuery
 from app.infrastructure.mappers.sample_item import sample_item_from_create
+from app.infrastructure.repositories.base import InDBQueryFactoryTrait
 
 logger = getLogger('uvicorn')
 
@@ -86,21 +87,16 @@ class InDBSampleItemRepository(SampleItemRepository):
             logger.warning('Entity with ID %s does not exist.', entity_id)
 
 
-class InDBSampleItemQueryFactory(SampleItemQueryFactory):
+class InDBSampleItemQueryFactory(
+    SampleItemQueryFactory,
+    InDBQueryFactoryTrait[SampleItem]):
     """In-DB SampleItem query."""
 
     def list_query(
             self,
+            api_query: ApiListQuery,
             *args: Any,
-            filters: FiltersType = None,
             **kwargs: Any,
     ) -> Select[tuple[SampleItem]]:
         """list query."""
-        stmt = select(SampleItem)
-        if filters:
-            filter_conditions = []
-            if 'name' in filters:
-                filter_conditions.append(SampleItem.name == filters['name'])
-
-            stmt = stmt.where(*filter_conditions)
-        return stmt
+        return self._list_query(api_query, SampleItem)

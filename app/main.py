@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from app.container import Container
+from app.di_container import Container
 from app.infrastructure.config.config import get_settings
 from app.interfaces.controllers.base import router
 from app.interfaces.middlewares.error_handlers import app_error_handlers

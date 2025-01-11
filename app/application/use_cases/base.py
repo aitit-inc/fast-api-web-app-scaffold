@@ -1,15 +1,15 @@
 """Base class of application use cases."""
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Any, Sequence, Callable
+from typing import Generic, TypeVar, Any
 
-from fastapi_pagination import Page, Params
-from fastapi_pagination.ext.sqlalchemy import paginate
-from pydantic import TypeAdapter, BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
+from sqlalchemy import Select
 
 from app.application.exc import EntityNotFound
-from app.domain.repositories.base import AsyncBaseRepository, BaseQueryFactory
+from app.domain.repositories.base import AsyncBaseRepository, \
+    BaseQueryFactory, ABCRepository
+from app.domain.value_objects.api_query import ApiListQuery
 
 T = TypeVar('T')
 
@@ -44,89 +44,59 @@ class AsyncBaseUseCase(Generic[T], ABC):
         """
 
 
-ReturnT = TypeVar('ReturnT', bound=BaseModel)
 IdT = TypeVar('IdT', int, str)
 EntityT = TypeVar('EntityT', bound=BaseModel)
 CreateT = TypeVar('CreateT', bound=BaseModel)
 UpdateT = TypeVar('UpdateT', bound=BaseModel)
+RepositoryT = TypeVar('RepositoryT', bound=ABCRepository)
 
 
-class AsyncBaseListUseCase(
-    AsyncBaseUseCase[Page[ReturnT]],
-    Generic[ReturnT, IdT, EntityT, CreateT, UpdateT],
-    ABC
+class BaseListUseCase(
+    BaseUseCase[Select[tuple[EntityT]]],
+    Generic[EntityT],
 ):
     """Async list use case base class."""
 
     def __init__(
             self,
-            db_session: AsyncSession,
             query_factory: BaseQueryFactory[EntityT],
-            adapter_to_read: Callable[[EntityT], ReturnT],
     ) -> None:
         """Constructor."""
-        self._db_session = db_session
         self._query_factory = query_factory
-        self._adapter_to_read = adapter_to_read
 
-    async def __call__(
-            self,
-            params: Params,
-    ) -> Page[ReturnT]:
-        """Execute the use case."""
-        stmt = self._query_factory.list_query()
-
-        return await paginate(  # type: ignore
-            self._db_session,
-            stmt,
-            transformer=self.transformer(),
-            params=params,
-        )
-
-    def transformer(self) -> Callable[[Sequence[EntityT]], Sequence[ReturnT]]:
-        """Transform or process the retrieved entity."""
-
-        def _transformer(xs: Sequence[EntityT]) -> Sequence[ReturnT]:
-            transformed = [self._adapter_to_read(x) for x in xs]
-            adapter = TypeAdapter(list[ReturnT])
-            return adapter.validate_python(transformed)
-
-        return _transformer
+    def __call__(self, api_query: ApiListQuery) -> Select[tuple[EntityT]]:
+        return self._query_factory.list_query(api_query)
 
 
 class AsyncBaseGetUseCase(
-    AsyncBaseUseCase[ReturnT],
-    Generic[ReturnT, IdT, EntityT, CreateT, UpdateT],
+    AsyncBaseUseCase[EntityT],
+    Generic[IdT, EntityT, RepositoryT],
     ABC
 ):
     """Async get use case base class."""
 
     def __init__(
             self,
-            repository: AsyncBaseRepository[
-                IdT, EntityT, CreateT, UpdateT],
-            adapter_to_read: Callable[[EntityT], ReturnT],
+            repository: RepositoryT,
     ) -> None:
         """Constructor."""
-        self._repository: AsyncBaseRepository[
-            IdT, EntityT, CreateT, UpdateT] = repository
-        self._adapter_to_read = adapter_to_read
+        self._repository = repository
 
     async def __call__(
             self,
             entity_id: IdT,
             *args: Any,
             **kwargs: Any,
-    ) -> ReturnT:
+    ) -> EntityT:
         """Execute the use case."""
-        entity = await self._repository.get_by_id(entity_id)
+        entity: EntityT | None = await self._repository.get_by_id(entity_id)
         if not entity:
             raise EntityNotFound(
                 EntityNotFound.to_msg(entity_id),
                 detail=f'Entity with ID {entity_id} does not exist.'
             )
 
-        return self._adapter_to_read(entity)
+        return entity
 
 
 class AsyncBaseCreateUseCase(

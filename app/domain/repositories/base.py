@@ -2,7 +2,9 @@
 from abc import abstractmethod, ABC
 from typing import Generic, TypeVar, Any
 
-from sqlalchemy.sql.selectable import Select
+from sqlalchemy import Select
+
+from app.domain.value_objects.api_query import ApiListQuery
 
 # A generic type variable representing the type of entities
 IdT = TypeVar('IdT')
@@ -13,7 +15,32 @@ UpdateT = TypeVar('UpdateT')
 FiltersType = dict[str, Any] | None
 
 
+class ABCRepository(ABC):
+    """Base repository interface for managing domain entities."""
+
+    @abstractmethod
+    async def get_by_id(self, *args: Any, **kwargs: Any) -> Any:
+        """Retrieve an entity by its ID"""
+
+    @abstractmethod
+    async def add(self, *args: Any, **kwargs: Any) -> Any:
+        """Add an entity"""
+
+    @abstractmethod
+    async def update(self, *args: Any, **kwargs: Any) -> Any:
+        """Update an entity"""
+
+    @abstractmethod
+    async def logical_delete(self, *args: Any, **kwargs: Any) -> None:
+        """Logical delete an entity by its ID"""
+
+    @abstractmethod
+    async def delete(self, *args: Any, **kwargs: Any) -> None:
+        """Delete an entity by its ID"""
+
+
 class AsyncBaseRepository(
+    ABCRepository,
     Generic[IdT, EntityT, CreateT, UpdateT],
     ABC
 ):
@@ -47,5 +74,10 @@ class BaseQueryFactory(
     """Base query factory interface."""
 
     @abstractmethod
-    def list_query(self, *args: Any, **kwargs: Any) -> Select[tuple[EntityT]]:
+    def list_query(
+            self,
+            api_query: ApiListQuery,
+            *args: Any,
+            **kwargs: Any
+    ) -> Select[tuple[EntityT]]:
         """Construct a SQL query for retrieving a list of entities."""

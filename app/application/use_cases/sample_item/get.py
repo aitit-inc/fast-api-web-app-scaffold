@@ -1,20 +1,12 @@
 """SampleItem get use case."""
 
 from app.application.use_cases.base import AsyncBaseGetUseCase
-from app.domain.entities.sample_item import SampleItemCreate, \
-    SampleItemUpdate, SampleItem, SampleItemReadWithMeta, SampleItemRead
+from app.domain.entities.sample_item import SampleItem
+from app.domain.repositories.sample_item import SampleItemRepository
 
 
 class SampleItemGetUseCase(
     AsyncBaseGetUseCase[
-        SampleItemRead, int, SampleItem, SampleItemCreate, SampleItemUpdate]
+        int, SampleItem, SampleItemRepository]
 ):
     """SampleItem get use case."""
-
-
-class SampleItemWithMetaGetUseCase(
-    AsyncBaseGetUseCase[
-        SampleItemReadWithMeta, int, SampleItem,
-        SampleItemCreate, SampleItemUpdate]
-):
-    """SampleItemWithMeta get use case."""

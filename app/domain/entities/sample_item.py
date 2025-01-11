@@ -48,14 +48,6 @@ class SampleItemCreate(SampleItemBase):
     """SampleItem entity create."""
 
 
-class SampleItemRead(SampleItemBase):
-    """SampleItem entity read."""
-    uuid: str
-    created_at: datetime
-    updated_at: datetime | None = None
-    deleted_at: datetime | None = None
-
-
 class SampleItemUpdate(SQLModel):
     """SampleItem entity update."""
     name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
@@ -66,8 +58,3 @@ class SampleItemLengths(BaseModel):
     """Value object to represent lengths of SampleItem fields."""
     name_length: int
     description_length: int
-
-
-class SampleItemReadWithMeta(SampleItemRead):
-    """SampleItem with meta."""
-    meta_data: SampleItemLengths

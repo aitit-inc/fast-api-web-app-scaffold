@@ -4,14 +4,14 @@ from typing import Callable
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
 from fastapi_pagination import Page, Params
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.sample_item.create import \
     SampleItemCreateUseCase
-from app.application.use_cases.sample_item.get import SampleItemGetUseCase, \
-    SampleItemWithMetaGetUseCase
-from app.application.use_cases.sample_item.list import SampleItemListUseCase, \
-    SampleItemWithMetaListUseCase
+from app.application.use_cases.sample_item.get import SampleItemGetUseCase
+from app.application.use_cases.sample_item.list import \
+    SampleItemListUseCase
 from app.application.use_cases.sample_item.logical_delete import \
     SampleItemLogicalDeleteUseCase
 from app.application.use_cases.sample_item.physical_delete import \
@@ -19,12 +19,13 @@ from app.application.use_cases.sample_item.physical_delete import \
 from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
 from app.domain.entities.sample_item import SampleItemCreate, \
-    SampleItemRead, SampleItemUpdate, SampleItemReadWithMeta
-from app.domain.repositories.sample_item import SampleItemRepository
-from app.infrastructure.mappers.sample_item import \
-    sample_item_with_meta_to_read, sample_item_to_read
-from app.infrastructure.repositories.sample_item_in_db import \
-    InDBSampleItemQueryFactory
+    SampleItemUpdate
+from app.domain.repositories.sample_item import SampleItemRepository, \
+    SampleItemQueryFactory
+from app.interfaces.serializers.sample_item import sample_item_to_read, \
+    sample_item_with_meta_to_read, sample_item_list_transformer, \
+    sample_item_with_meta_list_transformer, SampleItemReadWithMeta, \
+    SampleItemRead, SampleItemApiListQueryDto
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -37,38 +38,47 @@ router = APIRouter(
 @inject
 async def sample_item(
         with_meta: bool = False,
+        queries: SampleItemApiListQueryDto = Depends(),
         params: Params = Depends(),
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
-) -> Page[SampleItemReadWithMeta] | Page[SampleItemRead]:
+        sample_item_query_factory: SampleItemQueryFactory = Depends(
+            Provide['sample_item_query_factory']),
+) -> Page[SampleItemRead] | Page[SampleItemReadWithMeta]:
     """
     Retrieve a paginated list of SampleItem entities.
-    
+
     This GET endpoint returns a paginated list of SampleItem entities,
     optionally including metadata.
-    
+
     Args:
         with_meta (bool): Whether to include metadata in the response.
+        queries (SampleItemApiListQueryDto): Query parameters for filtering and
+            sorting the SampleItem entities. Injected as a dependency.
         params (Params): Pagination parameters. Injected as a dependency.
         session_factory (Callable[[], AsyncSession]): Factory to create
             database sessions. Injected as a dependency.
+        sample_item_query_factory (SampleItemQueryFactory): Factory to
+            create SampleItemQuery instances. Injected as a dependency.
 
     Returns:
         Page[SampleItem] | Page[SampleItemReadWithMeta]: A paginated list of
             SampleItem entities, with or without metadata.
     """
-    use_case_factory = SampleItemWithMetaListUseCase \
-        if with_meta else SampleItemListUseCase
-    adapter = sample_item_with_meta_to_read \
-        if with_meta else sample_item_to_read
+    use_case = SampleItemListUseCase(sample_item_query_factory)
+    stmt = use_case(queries.to_domain())
+
+    transformer = sample_item_with_meta_list_transformer \
+        if with_meta else sample_item_list_transformer
 
     async with session_factory() as db_session:
         async with db_session.begin():
-            return await use_case_factory(
+            return await paginate(  # type: ignore
                 db_session,
-                InDBSampleItemQueryFactory(),
-                adapter_to_read=adapter,  # type: ignore
-            )(params=params)
+                stmt,
+                transformer=transformer,
+                params=params,
+            )
 
 
 @router.get('/{entity_id}')
@@ -98,8 +108,6 @@ async def sample_item_by_id(
         SampleItem | SampleItemReadWithMeta: The fetched SampleItem entity,
         optionally including metadata.
     """
-    use_case_factory = SampleItemWithMetaGetUseCase \
-        if with_meta else SampleItemGetUseCase
     adapter = sample_item_with_meta_to_read \
         if with_meta else sample_item_to_read
 
@@ -107,10 +115,10 @@ async def sample_item_by_id(
         async with db_session.begin():
             repository = repository_factory(db_session)
 
-            return await use_case_factory(
-                repository,
-                adapter_to_read=adapter,  # type: ignore
-            )(entity_id)
+            use_case = SampleItemGetUseCase(repository)
+            entity = await use_case(entity_id)
+
+            return adapter(entity)
 
 
 @router.post('/', response_model=SampleItemRead,
@@ -211,7 +219,7 @@ async def logical_delete_sample_item(
     """
     Logically delete a specific SampleItem entity by its ID.
 
-    This DELETE endpoint utilizes the SampleItem repository and the
+    This deletes endpoint utilizes the SampleItem repository and the
     SampleItemLogicalDeleteUseCase to perform a logical deletion of
     the given SampleItem entity (e.g., marking it as deleted without
     removing it from the database).
@@ -249,7 +257,7 @@ async def physical_delete_sample_item(
     """
     Physically delete a specific SampleItem entity by its ID.
 
-    This DELETE endpoint uses the SampleItem repository and the
+    This deletes endpoint uses the SampleItem repository and the
     SampleItemPhysicalDeleteUseCase to permanently delete the given
     SampleItem entity from the database.
 
