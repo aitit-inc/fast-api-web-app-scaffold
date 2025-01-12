@@ -22,23 +22,28 @@ class AsyncBaseRepository(
     """Async base repository interface for managing domain entities."""
 
     @abstractmethod
-    async def get_by_id(self, entity_id: IdT) -> EntityT | None:
+    async def get_by_id(self, entity_id: IdT,
+                        *args: Any, **kwargs: Any) -> EntityT | None:
         """Retrieve an entity by its ID"""
 
     @abstractmethod
-    async def add(self, entity: EntityT) -> EntityT:
+    async def add(self, entity: EntityT,
+                  *args: Any, **kwargs: Any) -> EntityT:
         """Add an entity"""
 
     @abstractmethod
-    async def update(self, entity_id: IdT, data: UpdateT) -> EntityT:
+    async def update(self, entity_id: IdT, data: UpdateT,
+                     *args: Any, **kwargs: Any) -> EntityT:
         """Update an entity"""
 
     @abstractmethod
-    async def logical_delete(self, entity_id: IdT) -> None:
+    async def logical_delete(self, entity_id: IdT,
+                             *args: Any, **kwargs: Any) -> None:
         """Logical delete an entity by its ID"""
 
     @abstractmethod
-    async def delete(self, entity_id: IdT) -> None:
+    async def delete(self, entity_id: IdT,
+                     *args: Any, **kwargs: Any) -> None:
         """Delete an entity by its ID"""
 
 

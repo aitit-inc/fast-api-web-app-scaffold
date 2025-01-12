@@ -8,10 +8,11 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dto.sample_item import SampleItemUpdateDto, \
-    SampleItemCreate, SampleItemReadDto
+    SampleItemCreate, SampleItemReadDto, SampleItemReadDtoWithMeta, \
+    SampleItemGetQuery
 from app.application.use_cases.sample_item.create import \
     SampleItemCreateUseCase
-from app.application.use_cases.sample_item.get import SampleItemGetUseCase
+from app.application.use_cases.sample_item.get import SampleItemGetByIdUseCase
 from app.application.use_cases.sample_item.list import \
     SampleItemListUseCase
 from app.application.use_cases.sample_item.logical_delete import \
@@ -22,10 +23,9 @@ from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
-from app.interfaces.serializers.sample_item import sample_item_to_read, \
-    sample_item_with_meta_to_read, sample_item_list_transformer, \
-    sample_item_with_meta_list_transformer, SampleItemReadDtoWithMeta, \
-    SampleItemApiListQueryDto
+from app.interfaces.serializers.sample_item import \
+    sample_item_list_transformer, \
+    sample_item_with_meta_list_transformer, SampleItemApiListQueryDto
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -85,7 +85,7 @@ async def sample_item(
 @inject
 async def sample_item_by_id(
         entity_id: int,
-        with_meta: bool = False,
+        query: SampleItemGetQuery = Depends(),
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
         repository_factory: Callable[
@@ -97,7 +97,8 @@ async def sample_item_by_id(
     
     Args:
         entity_id (int): The ID of the SampleItem to retrieve.
-        with_meta (bool): Whether to include metadata in the response.
+        query (SampleItemGetQuery): Query parameters for the SampleItem
+            entity. Injected as a dependency.
         session_factory (Callable[[], AsyncSession]): Factory to create
             database sessions. Injected as a dependency.
         repository_factory (Callable[[AsyncSession], SampleItemRepository]):
@@ -105,20 +106,18 @@ async def sample_item_by_id(
             as a dependency.
     
     Returns:
-        SampleItem | SampleItemReadDtoWithMeta: The fetched SampleItem entity,
-        optionally including metadata.
+        SampleItemReadDto | SampleItemReadDtoWithMeta:
+            The fetched SampleItem entity, optionally including metadata.
     """
-    adapter = sample_item_with_meta_to_read \
-        if with_meta else sample_item_to_read
 
     async with session_factory() as db_session:
         async with db_session.begin():
             repository = repository_factory(db_session)
 
-            use_case = SampleItemGetUseCase(repository)
-            entity = await use_case(entity_id)
+            use_case = SampleItemGetByIdUseCase(repository)
+            read_data = await use_case(entity_id, query, None)
 
-            return adapter(entity)
+            return read_data
 
 
 @router.post('/', response_model=SampleItemReadDto,
@@ -157,7 +156,7 @@ async def create_sample_item(
             repository = repository_factory(db_session)
 
             use_case = SampleItemCreateUseCase(repository)
-            read_data = await use_case(data)
+            read_data = await use_case(data, None)
 
             return read_data
 
@@ -201,7 +200,7 @@ async def update_sample_item(
             use_case = SampleItemUpdateUseCase(
                 repository
             )
-            read_data = await use_case(entity_id, data)
+            read_data = await use_case(entity_id, data, None)
 
             return read_data
 

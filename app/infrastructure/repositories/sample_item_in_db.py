@@ -37,22 +37,31 @@ class InDBSampleItemRepository(SampleItemRepository):
         self._get_now = get_now
 
     async def get_by_id(
-            self, entity_id: int) -> SampleItem | None:
+            self, entity_id: int, *args: Any,
+            include_deleted: bool = False, **kwargs: Any,
+    ) -> SampleItem | None:
         """Retrieve an entity by its ID."""
-        stmt = select(SampleItem).where(
-            SampleItem.id == entity_id)  # type: ignore
+        where_clauses = [SampleItem.id == entity_id]
+        if not include_deleted:
+            where_clauses.append(
+                SampleItem.deleted_at.is_(None),  # type: ignore
+            )
+        stmt = select(SampleItem).where(*where_clauses)
         result = await self._db_session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def add(self, entity: SampleItem) -> SampleItem:
+    async def add(self, entity: SampleItem,
+                  *args: Any, **kwargs: Any,
+                  ) -> SampleItem:
         """Add an entity."""
         self._db_session.add(entity)
         await self._db_session.flush()
         await self._db_session.refresh(entity)
         return entity
 
-    async def update(self, entity_id: int,
-                     data: UpdateT) -> SampleItem:
+    async def update(self, entity_id: int, data: UpdateT,
+                     *args: Any, **kwargs: Any,
+                     ) -> SampleItem:
         """Update an entity."""
         existing_entity = await self.get_by_id(entity_id)
         if not existing_entity:
@@ -66,7 +75,9 @@ class InDBSampleItemRepository(SampleItemRepository):
         await self._db_session.refresh(existing_entity)
         return existing_entity
 
-    async def logical_delete(self, entity_id: int) -> None:
+    async def logical_delete(self, entity_id: int,
+                             *args: Any, **kwargs: Any,
+                             ) -> None:
         """Logical delete the entity with the specified ID."""
         existing_entity = await self.get_by_id(entity_id)
         if existing_entity:
@@ -76,11 +87,15 @@ class InDBSampleItemRepository(SampleItemRepository):
         else:
             logger.warning('Entity with ID %s does not exist.', entity_id)
 
-    async def delete(self, entity_id: int) -> None:
+    async def delete(self, entity_id: int,
+                     *args: Any, **kwargs: Any,
+                     ) -> None:
         """Delete the entity with the specified ID."""
-        existing_entity = await self.get_by_id(entity_id)
+        existing_entity = await self.get_by_id(
+            entity_id, include_deleted=True)
         if existing_entity:
             await self._db_session.delete(existing_entity)
+            await self._db_session.flush()
         else:
             logger.warning('Entity with ID %s does not exist.', entity_id)
 

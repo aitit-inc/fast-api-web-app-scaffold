@@ -5,16 +5,12 @@ from typing import Sequence
 from fastapi import Query
 from pydantic import TypeAdapter, Field
 
-from app.application.dto.sample_item import SampleItemReadDto
-from app.domain.entities.sample_item import SampleItemLengths, SampleItem
+from app.application.dto.sample_item import SampleItemReadDto, \
+    SampleItemReadDtoWithMeta
+from app.domain.entities.sample_item import SampleItem
 from app.domain.services.sample_item_service import SampleItemService
 from app.domain.value_objects.api_query import ApiListQuery
 from app.interfaces.serializers.base import ApiListQueryDtoBaseModel
-
-
-class SampleItemReadDtoWithMeta(SampleItemReadDto):
-    """SampleItem with meta."""
-    meta_data: SampleItemLengths
 
 
 # TODO: Delete
@@ -55,9 +51,9 @@ class SampleItemApiListQueryDto(ApiListQueryDtoBaseModel):
     name__eq: str | None = None
     name__like: str | None = Field(Query(
         default=None,
+
         description='Fuzzy search query for SampleItem name, following '
-                    'PostgreSQL ILIKE semantics',
-        example='%foo%',
+                    'PostgreSQL ILIKE semantics, e.g. "%foo%" or "f_o"',
     ))
     created_at__gte: datetime | None = None
     created_at__lte: datetime | None = None
