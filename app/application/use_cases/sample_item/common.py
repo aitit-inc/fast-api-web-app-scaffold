@@ -1,4 +1,8 @@
 """SampleItem base use case."""
+from typing import Sequence
+
+from pydantic import TypeAdapter
+
 from app.application.dto.sample_item import SampleItemReadDto, \
     SampleItemGetQuery, SampleItemReadDtoWithMeta
 from app.domain.entities.sample_item import SampleItem
@@ -36,3 +40,19 @@ def sample_item_to_read_dto(
         return sample_item_with_meta_to_read(data)
 
     return sample_item_to_read(data)
+
+
+def sample_item_list_transformer(
+        xs: Sequence[SampleItem]) -> Sequence[SampleItemReadDto]:
+    """Transform a list of SampleItems into SampleItemRead."""
+    transformed = [sample_item_to_read(x) for x in xs]
+    adapter = TypeAdapter(list[SampleItemReadDto])
+    return adapter.validate_python(transformed)
+
+
+def sample_item_with_meta_list_transformer(
+        xs: Sequence[SampleItem]) -> Sequence[SampleItemReadDtoWithMeta]:
+    """Transform a list of SampleItems into SampleItemReadWithMeta."""
+    transformed = [sample_item_with_meta_to_read(x) for x in xs]
+    adapter = TypeAdapter(list[SampleItemReadDtoWithMeta])
+    return adapter.validate_python(transformed)

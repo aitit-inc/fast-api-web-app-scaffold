@@ -6,7 +6,9 @@ from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import SQLModel, Field
 
 from app.domain.entities.common import MAX_LEN_SHORT
-from app.domain.entities.sample_item import SampleItemBase, SampleItemLengths
+from app.domain.entities.sample_item import SampleItemBase, \
+    SampleItemLengths, SampleItem
+from app.application.dto.base import ApiListQueryDtoBaseModel
 
 
 class SampleItemCreate(SampleItemBase):
@@ -39,3 +41,19 @@ class SampleItemGetQuery(BaseModel):
             default=False,
             description='Include meta data in response',
         ))
+
+
+class SampleItemApiListQueryDto(ApiListQueryDtoBaseModel):
+    """SampleItem filter."""
+    __entity_cls__ = SampleItem
+    name__eq: str | None = None
+    name__like: str | None = PydanticField(Query(
+        default=None,
+
+        description='Fuzzy search query for SampleItem name, following '
+                    'PostgreSQL ILIKE semantics, e.g. "%foo%" or "f_o"',
+    ))
+    created_at__gte: datetime | None = None
+    created_at__lte: datetime | None = None
+    created_at__asc: bool | None = None
+    created_at__desc: bool | None = None

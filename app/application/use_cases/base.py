@@ -10,7 +10,7 @@ from sqlmodel import SQLModel
 from app.application.exc import EntityNotFound
 from app.domain.repositories.base import BaseQueryFactory, \
     AsyncBaseRepository
-from app.domain.value_objects.api_query import ApiListQuery
+from app.application.dto.base import ApiListQueryDtoBaseModel
 
 T = TypeVar('T')
 
@@ -46,9 +46,9 @@ class AsyncBaseUseCase(Generic[T], ABC):
 
 
 IdT = TypeVar('IdT', int, str)
-ApiQueryT = TypeVar('ApiQueryT', bound=BaseModel | None)
+ApiQueryT = TypeVar('ApiQueryT', bound=ApiListQueryDtoBaseModel | None)
 ApiBodyT = TypeVar('ApiBodyT', bound=BaseModel | None)
-EntityT = TypeVar('EntityT', bound=BaseModel)
+EntityT = TypeVar('EntityT', bound=BaseModel | SQLModel)
 CreateT = TypeVar('CreateT', bound=BaseModel | SQLModel)
 UpdateT = TypeVar('UpdateT', bound=BaseModel | SQLModel)
 ReturnT = TypeVar('ReturnT', bound=BaseModel | SQLModel)
@@ -58,7 +58,7 @@ RepositoryT = TypeVar('RepositoryT', bound=AsyncBaseRepository[
 
 class BaseListUseCase(
     BaseUseCase[Select[tuple[EntityT]]],
-    Generic[EntityT],
+    Generic[ApiQueryT, EntityT],
 ):
     """Async list use case base class."""
 
@@ -69,8 +69,8 @@ class BaseListUseCase(
         """Constructor."""
         self._query_factory = query_factory
 
-    def __call__(self, api_query: ApiListQuery) -> Select[tuple[EntityT]]:
-        return self._query_factory.list_query(api_query)
+    def __call__(self, api_query: ApiQueryT) -> Select[tuple[EntityT]]:
+        return self._query_factory.list_query(api_query.to_domain())
 
 
 class AsyncBaseGetByIdUseCase(

@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dto.sample_item import SampleItemUpdateDto, \
     SampleItemCreate, SampleItemReadDto, SampleItemReadDtoWithMeta, \
-    SampleItemGetQuery
+    SampleItemGetQuery, SampleItemApiListQueryDto
+from app.application.use_cases.sample_item.common import \
+    sample_item_list_transformer, sample_item_with_meta_list_transformer
 from app.application.use_cases.sample_item.create import \
     SampleItemCreateUseCase
 from app.application.use_cases.sample_item.get import SampleItemGetByIdUseCase
@@ -23,9 +25,6 @@ from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
-from app.interfaces.serializers.sample_item import \
-    sample_item_list_transformer, \
-    sample_item_with_meta_list_transformer, SampleItemApiListQueryDto
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -38,13 +37,13 @@ router = APIRouter(
 @inject
 async def sample_item(
         with_meta: bool = False,
-        queries: SampleItemApiListQueryDto = Depends(),
+        query: SampleItemApiListQueryDto = Depends(),
         params: Params = Depends(),
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
         sample_item_query_factory: SampleItemQueryFactory = Depends(
             Provide['sample_item_query_factory']),
-) -> Page[SampleItemReadDto] | Page[SampleItemReadDtoWithMeta]:
+) -> Page[SampleItemReadDtoWithMeta] | Page[SampleItemReadDto]:
     """
     Retrieve a paginated list of SampleItem entities.
 
@@ -53,7 +52,7 @@ async def sample_item(
 
     Args:
         with_meta (bool): Whether to include metadata in the response.
-        queries (SampleItemApiListQueryDto): Query parameters for filtering and
+        query (SampleItemApiListQueryDto): Query parameters for filtering and
             sorting the SampleItem entities. Injected as a dependency.
         params (Params): Pagination parameters. Injected as a dependency.
         session_factory (Callable[[], AsyncSession]): Factory to create
@@ -66,7 +65,7 @@ async def sample_item(
             SampleItem entities, with or without metadata.
     """
     use_case = SampleItemListUseCase(sample_item_query_factory)
-    stmt = use_case(queries.to_domain())
+    stmt = use_case(query)
 
     transformer = sample_item_with_meta_list_transformer \
         if with_meta else sample_item_list_transformer
@@ -91,7 +90,7 @@ async def sample_item_by_id(
         repository_factory: Callable[
             [AsyncSession], SampleItemRepository] = Depends(
             Provide['sample_item_repository'])
-) -> SampleItemReadDto | SampleItemReadDtoWithMeta:
+) -> SampleItemReadDtoWithMeta | SampleItemReadDto:
     """
     Fetch a specific SampleItem entity by its ID.
     

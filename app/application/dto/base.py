@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from sqlmodel import SQLModel
 from sqlmodel.main import FieldInfo
 
-from app.domain.value_objects.api_query import logger, ApiListQueryOp
+from app.domain.value_objects.api_query import logger, ApiListQueryOp, \
+    ApiListQuery
 
 
 class ApiListQueryDtoBaseModel(BaseModel):
@@ -59,3 +60,9 @@ class ApiListQueryDtoBaseModel(BaseModel):
                     f"The field name '{field_name}' must contain '__'."
                 )
         return values
+
+    def to_domain(self) -> ApiListQuery:
+        """Convert to domain object."""
+        return ApiListQuery(
+            queries=self.model_dump(exclude_none=True),
+        )
