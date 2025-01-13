@@ -7,10 +7,11 @@ from pydantic import BaseModel
 from sqlalchemy import Select
 from sqlmodel import SQLModel
 
+from app.application.dto.base import ApiListQueryDtoBaseModel
 from app.application.exc import EntityNotFound
 from app.domain.repositories.base import BaseQueryFactory, \
     AsyncBaseRepository
-from app.application.dto.base import ApiListQueryDtoBaseModel
+from app.domain.value_objects.api_query import ApiListQuery
 
 T = TypeVar('T')
 
@@ -46,19 +47,18 @@ class AsyncBaseUseCase(Generic[T], ABC):
 
 
 IdT = TypeVar('IdT', int, str)
-ApiQueryT = TypeVar('ApiQueryT', bound=ApiListQueryDtoBaseModel | None)
+ApiQueryT = TypeVar('ApiQueryT', bound=BaseModel | None)
+ApiListQueryT = TypeVar('ApiListQueryT', bound=ApiListQueryDtoBaseModel | None)
 ApiBodyT = TypeVar('ApiBodyT', bound=BaseModel | None)
-EntityT = TypeVar('EntityT', bound=BaseModel | SQLModel)
+EntityT = TypeVar('EntityT', bound=SQLModel)
 CreateT = TypeVar('CreateT', bound=BaseModel | SQLModel)
 UpdateT = TypeVar('UpdateT', bound=BaseModel | SQLModel)
 ReturnT = TypeVar('ReturnT', bound=BaseModel | SQLModel)
-RepositoryT = TypeVar('RepositoryT', bound=AsyncBaseRepository[
-    IdT, EntityT])
 
 
 class BaseListUseCase(
     BaseUseCase[Select[tuple[EntityT]]],
-    Generic[ApiQueryT, EntityT],
+    Generic[ApiListQueryT, EntityT],
 ):
     """Async list use case base class."""
 
@@ -69,23 +69,25 @@ class BaseListUseCase(
         """Constructor."""
         self._query_factory = query_factory
 
-    def __call__(self, api_query: ApiQueryT) -> Select[tuple[EntityT]]:
-        return self._query_factory.list_query(api_query.to_domain())
+    def __call__(self, api_query: ApiListQueryT) -> Select[tuple[EntityT]]:
+        domain_model = api_query.to_domain() \
+            if api_query is not None else ApiListQuery.empty()
+        return self._query_factory.list_query(domain_model)
 
 
 class AsyncBaseGetByIdUseCase(
     AsyncBaseUseCase[ReturnT],
-    Generic[IdT, ApiQueryT, ApiBodyT, EntityT, ReturnT, RepositoryT],
+    Generic[IdT, ApiQueryT, ApiBodyT, EntityT, ReturnT],
     ABC
 ):
     """Async get use case base class."""
 
     def __init__(
             self,
-            repository: RepositoryT,
+            repository: AsyncBaseRepository[IdT, EntityT]
     ) -> None:
         """Constructor."""
-        self._repository = repository
+        self._repository: AsyncBaseRepository[IdT, EntityT] = repository
 
     async def __call__(
             self,
@@ -117,17 +119,17 @@ class AsyncBaseGetByIdUseCase(
 
 class AsyncBaseCreateUseCase(
     AsyncBaseUseCase[ReturnT],
-    Generic[ApiQueryT, EntityT, CreateT, ReturnT, RepositoryT],
+    Generic[IdT, ApiQueryT, EntityT, CreateT, ReturnT],
     ABC
 ):
     """Async create use case base class."""
 
     def __init__(
             self,
-            repository: RepositoryT,
+            repository: AsyncBaseRepository[IdT, EntityT],
     ) -> None:
         """Constructor."""
-        self._repository: RepositoryT = repository
+        self._repository: AsyncBaseRepository[IdT, EntityT] = repository
 
     async def __call__(
             self,
@@ -153,17 +155,17 @@ class AsyncBaseCreateUseCase(
 
 class AsyncBaseUpdateUseCase(
     AsyncBaseUseCase[ReturnT],
-    Generic[IdT, ApiQueryT, EntityT, UpdateT, ReturnT, RepositoryT],
+    Generic[IdT, ApiQueryT, EntityT, UpdateT, ReturnT],
     ABC
 ):
     """Async update use case base class."""
 
     def __init__(
             self,
-            repository: RepositoryT,
+            repository: AsyncBaseRepository[IdT, EntityT],
     ) -> None:
         """Constructor."""
-        self._repository: RepositoryT = repository
+        self._repository: AsyncBaseRepository[IdT, EntityT] = repository
 
     async def __call__(
             self,
@@ -191,17 +193,17 @@ class AsyncBaseUpdateUseCase(
 
 class AsyncBaseLogicalDeleteUseCase(
     AsyncBaseUseCase[None],
-    Generic[IdT, RepositoryT],
+    Generic[IdT, EntityT],
     ABC
 ):
     """Async logical delete use case base class."""
 
     def __init__(
             self,
-            repository: RepositoryT,
+            repository: AsyncBaseRepository[IdT, EntityT],
     ) -> None:
         """Constructor."""
-        self._repository: RepositoryT = repository
+        self._repository: AsyncBaseRepository[IdT, EntityT] = repository
 
     async def __call__(
             self,
@@ -215,17 +217,17 @@ class AsyncBaseLogicalDeleteUseCase(
 
 class AsyncBasePhysicalDeleteUseCase(
     AsyncBaseUseCase[None],
-    Generic[IdT, RepositoryT],
+    Generic[IdT, EntityT],
     ABC
 ):
     """Async physical delete use case base class."""
 
     def __init__(
             self,
-            repository: RepositoryT,
+            repository: AsyncBaseRepository[IdT, EntityT],
     ) -> None:
         """Constructor."""
-        self._repository: RepositoryT = repository
+        self._repository: AsyncBaseRepository[IdT, EntityT] = repository
 
     async def __call__(
             self,

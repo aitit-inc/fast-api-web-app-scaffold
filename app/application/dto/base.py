@@ -1,12 +1,15 @@
 """Serializer base models."""
+from logging import getLogger
 from typing import Type, Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 from sqlmodel import SQLModel
 from sqlmodel.main import FieldInfo
 
-from app.domain.value_objects.api_query import logger, ApiListQueryOp, \
+from app.domain.value_objects.api_query import ApiListQueryOp, \
     ApiListQuery
+
+logger = getLogger('uvicorn')
 
 
 class ApiListQueryDtoBaseModel(BaseModel):

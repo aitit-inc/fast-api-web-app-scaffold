@@ -6,13 +6,12 @@ from app.application.dto.sample_item import SampleItemCreate, \
 from app.application.use_cases.base import AsyncBaseCreateUseCase
 from app.application.use_cases.sample_item.common import sample_item_to_read
 from app.domain.entities.sample_item import SampleItem
-from app.domain.repositories.sample_item import SampleItemRepository
 
 
 class SampleItemCreateUseCase(
     AsyncBaseCreateUseCase[
-        None, SampleItem, SampleItemCreate,
-        SampleItemReadDto, SampleItemRepository],
+        int, None, SampleItem, SampleItemCreate,
+        SampleItemReadDto],
 ):
     """SampleItem create use case implementation."""
 

@@ -31,3 +31,8 @@ class ApiListQueryOp(str, Enum):
 class ApiListQuery(BaseModel):
     """Base API list query DTO"""
     queries: dict[str, Any]
+
+    @staticmethod
+    def empty() -> 'ApiListQuery':
+        """Return empty query"""
+        return ApiListQuery(queries={})

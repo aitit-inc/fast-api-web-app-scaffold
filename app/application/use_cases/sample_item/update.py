@@ -6,14 +6,11 @@ from app.application.dto.sample_item import SampleItemUpdateDto, \
 from app.application.use_cases.base import AsyncBaseUpdateUseCase, ReturnT
 from app.application.use_cases.sample_item.common import sample_item_to_read
 from app.domain.entities.sample_item import SampleItem
-from app.domain.repositories.sample_item import SampleItemRepository
 
 
 class SampleItemUpdateUseCase(
     AsyncBaseUpdateUseCase[
-        int, None, SampleItem, SampleItemUpdateDto, SampleItemReadDto,
-        SampleItemRepository
-    ]
+        int, None, SampleItem, SampleItemUpdateDto, SampleItemReadDto]
 ):
     """SampleItem update use case."""
 
