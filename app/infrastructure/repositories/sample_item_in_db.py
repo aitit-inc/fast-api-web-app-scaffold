@@ -3,22 +3,25 @@ from datetime import datetime
 from logging import getLogger
 from typing import Callable, Any
 
-from sqlalchemy import select, Select
+from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.exc import EntityNotFound
 from app.domain.entities.sample_item import SampleItem
-from app.domain.repositories.base import UpdateT
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
 from app.domain.value_objects.api_query import ApiListQuery
-from app.infrastructure.repositories.base import InDBQueryFactoryTrait
+from app.infrastructure.repositories.base import InDBQueryFactoryTrait, \
+    InDBBaseEntityRepository
 
 logger = getLogger('uvicorn')
 
 
-class InDBSampleItemRepository(SampleItemRepository):
+class InDBSampleItemRepository(
+    SampleItemRepository,
+    InDBBaseEntityRepository[int, SampleItem],
+):
     """In-DB SampleItem repository."""
+    _entity_cls = SampleItem
 
     @staticmethod
     def factory(
@@ -26,78 +29,6 @@ class InDBSampleItemRepository(SampleItemRepository):
     ) -> Callable[[AsyncSession], 'InDBSampleItemRepository']:
         """Factory method."""
         return lambda db_session: InDBSampleItemRepository(db_session, get_now)
-
-    def __init__(
-            self,
-            db_session: AsyncSession,
-            get_now: Callable[[], datetime],
-    ):
-        """Constructor."""
-        self._db_session = db_session
-        self._get_now = get_now
-
-    async def get_by_id(
-            self, entity_id: int, *args: Any,
-            include_deleted: bool = False, **kwargs: Any,
-    ) -> SampleItem | None:
-        """Retrieve an entity by its ID."""
-        where_clauses = [SampleItem.id == entity_id]
-        if not include_deleted:
-            where_clauses.append(
-                SampleItem.deleted_at.is_(None),  # type: ignore
-            )
-        stmt = select(SampleItem).where(*where_clauses)
-        result = await self._db_session.execute(stmt)
-        return result.scalar_one_or_none()
-
-    async def add(self, entity: SampleItem,
-                  *args: Any, **kwargs: Any,
-                  ) -> SampleItem:
-        """Add an entity."""
-        self._db_session.add(entity)
-        await self._db_session.flush()
-        await self._db_session.refresh(entity)
-        return entity
-
-    async def update(self, entity_id: int, data: UpdateT,
-                     *args: Any, **kwargs: Any,
-                     ) -> SampleItem:
-        """Update an entity."""
-        existing_entity = await self.get_by_id(entity_id)
-        if not existing_entity:
-            raise EntityNotFound(
-                EntityNotFound.to_msg(entity_id),
-            )
-
-        existing_entity.sqlmodel_update(data)
-        await self._db_session.merge(existing_entity)
-        await self._db_session.flush()
-        await self._db_session.refresh(existing_entity)
-        return existing_entity
-
-    async def logical_delete(self, entity_id: int,
-                             *args: Any, **kwargs: Any,
-                             ) -> None:
-        """Logical delete the entity with the specified ID."""
-        existing_entity = await self.get_by_id(entity_id)
-        if existing_entity:
-            existing_entity.deleted_at = self._get_now()
-            await self._db_session.merge(existing_entity)
-            await self._db_session.flush()
-        else:
-            logger.warning('Entity with ID %s does not exist.', entity_id)
-
-    async def delete(self, entity_id: int,
-                     *args: Any, **kwargs: Any,
-                     ) -> None:
-        """Delete the entity with the specified ID."""
-        existing_entity = await self.get_by_id(
-            entity_id, include_deleted=True)
-        if existing_entity:
-            await self._db_session.delete(existing_entity)
-            await self._db_session.flush()
-        else:
-            logger.warning('Entity with ID %s does not exist.', entity_id)
 
 
 class InDBSampleItemQueryFactory(
