@@ -22,6 +22,7 @@ class InDBBaseEntityRepository(
 ):
     """Base repository for in-database entities."""
     _entity_cls: type[EntityT]
+    _id_field: str = 'id'
 
     def __init__(
             self,
@@ -32,16 +33,21 @@ class InDBBaseEntityRepository(
         self._db_session = db_session
         self._get_now = get_now
 
+    @property
+    def id_field(self) -> str:
+        """Get the ID field name."""
+        return type(self)._id_field
+
     async def get_by_id(self, entity_id: IdT, *args: Any,
                         include_deleted: bool = False, **kwargs: Any,
                         ) -> EntityT | None:
         """Retrieve an entity by its ID"""
-        where_clauses = [self._entity_cls.id == entity_id]
+        where_clauses = [
+            getattr(self._entity_cls, self.id_field) == entity_id]
         if not include_deleted:
             where_clauses.append(
-                self._entity_cls.deleted_at.is_(None),  # type: ignore
-            )
-        stmt = select(self._entity_cls).where(*where_clauses)  # type: ignore
+                self._entity_cls.deleted_at.is_(None))  # type: ignore
+        stmt = select(self._entity_cls).where(*where_clauses)
         result = await self._db_session.execute(stmt)
         return result.scalar_one_or_none()
 

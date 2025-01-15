@@ -8,7 +8,8 @@ from app.domain.factories.sample_item import SampleItemFactory
 from app.infrastructure.config import config
 from app.infrastructure.database.database import Database
 from app.infrastructure.repositories.sample_item_in_db import \
-    InDBSampleItemRepository, InDBSampleItemQueryFactory
+    InDBSampleItemRepository, InDBSampleItemQueryFactory, \
+    InDBSampleItemByUUIDRepository
 
 logger = logging.getLogger('uvicorn')
 
@@ -23,6 +24,7 @@ class Container(containers.DeclarativeContainer):
 
             # V1 app endpoints
             'app.interfaces.controllers.v1.sample_item',
+            'app.interfaces.controllers.v1.sample_item_by_uuid',
         ],
     )
 
@@ -40,6 +42,10 @@ class Container(containers.DeclarativeContainer):
     sample_item_factory = SampleItemFactory(get_now, uuid)
     sample_item_repository = providers.Factory(
         InDBSampleItemRepository.factory,
+        get_now=get_now,
+    )
+    sample_item_by_uuid_repository = providers.Factory(
+        InDBSampleItemByUUIDRepository.factory,
         get_now=get_now,
     )
 
