@@ -16,7 +16,7 @@ managing database schemas.
 
 ## How to run
 
-### Rquirements
+### Requirements
 
 - Docker desktop, or Docker engine and docker-compose
 
