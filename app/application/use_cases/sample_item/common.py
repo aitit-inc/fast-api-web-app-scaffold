@@ -1,4 +1,4 @@
-"""SampleItem base use case."""
+"""Common functions for SampleItem use case."""
 from typing import Sequence
 
 from pydantic import TypeAdapter
@@ -7,15 +7,6 @@ from app.application.dto.sample_item import SampleItemReadDto, \
     SampleItemGetQuery, SampleItemReadDtoWithMeta
 from app.domain.entities.sample_item import SampleItem
 from app.domain.services.sample_item_service import SampleItemService
-
-
-class SampleItemUseCaseBase:
-    """SampleItem base use case."""
-
-    def _to_return_dto(
-            self,
-            entity: SampleItem) -> SampleItemReadDto:
-        return SampleItemReadDto.model_validate(entity)
 
 
 def sample_item_to_read(data: SampleItem) -> SampleItemReadDto:

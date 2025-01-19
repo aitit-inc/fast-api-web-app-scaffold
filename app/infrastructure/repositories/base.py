@@ -1,5 +1,4 @@
 """Repository implementation base class."""
-from abc import ABC
 from datetime import datetime
 from logging import getLogger
 from typing import Generic, Any, Callable
@@ -9,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exc import EntityNotFound
 from app.domain.repositories.base import EntityT, AsyncBaseRepository, IdT, \
-    UpdateT
+    UpdateT, BaseQueryFactory
 from app.domain.value_objects.api_query import ApiListQuery, \
     ApiListQueryOp
 
@@ -23,6 +22,7 @@ class InDBBaseEntityRepository(
     """Base repository for in-database entities."""
     _entity_cls: type[EntityT]
     _id_field: str = 'id'
+    _deleted_at_field: str = 'deleted_at'
 
     def __init__(
             self,
@@ -46,7 +46,8 @@ class InDBBaseEntityRepository(
             getattr(self._entity_cls, self.id_field) == entity_id]
         if not include_deleted:
             where_clauses.append(
-                self._entity_cls.deleted_at.is_(None))  # type: ignore
+                getattr(self._entity_cls,
+                        self._deleted_at_field).is_(None))
         stmt = select(self._entity_cls).where(*where_clauses)
         result = await self._db_session.execute(stmt)
         return result.scalar_one_or_none()
@@ -81,7 +82,7 @@ class InDBBaseEntityRepository(
         """Logical delete the entity with the specified ID."""
         existing_entity = await self.get_by_id(entity_id)
         if existing_entity:
-            existing_entity.deleted_at = self._get_now()
+            setattr(existing_entity, self._deleted_at_field, self._get_now())
             await self._db_session.merge(existing_entity)
             await self._db_session.flush()
         else:
@@ -99,14 +100,25 @@ class InDBBaseEntityRepository(
             logger.warning('Entity with ID %s does not exist.', entity_id)
 
 
-class InDBQueryFactoryTrait(
+class InDBBaseQueryFactory(
+    BaseQueryFactory[EntityT],
     Generic[EntityT],
-    ABC
 ):
     """Base query factory for in-database repositories."""
+    _entity_cls: type[EntityT]
+    _deleted_at_field: str = 'deleted_at'
 
-    @staticmethod
+    def list_query(
+            self,
+            api_query: ApiListQuery,
+            *args: Any,
+            **kwargs: Any,
+    ) -> Select[tuple[EntityT]]:
+        """list query."""
+        return self._list_query(api_query, self._entity_cls)
+
     def _list_query(
+            self,
             api_query: ApiListQuery,
             model: type[EntityT],
             include_deleted: bool = False,
@@ -116,7 +128,8 @@ class InDBQueryFactoryTrait(
         queries = api_query.queries
 
         if not include_deleted:
-            stmt = stmt.where(model.deleted_at.is_(None))  # type: ignore
+            stmt = stmt.where(
+                getattr(model, self._deleted_at_field).is_(None))
 
         def _get_field_op(key_: str) -> tuple[str, str]:
             field_, op_ = key_.split('__')

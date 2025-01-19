@@ -4,7 +4,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.application.exc import EntityNotFound
+from app.domain.exc import CustomBaseException
 from app.interfaces.views.json_response import ErrorJsonResponseDetail, \
     error_json_response
 
@@ -14,12 +14,13 @@ logger = logging.getLogger('uvicorn')
 def app_error_handlers(app_: FastAPI) -> None:
     """Add handlers to the application."""
 
-    @app_.exception_handler(EntityNotFound)
-    async def entity_not_found_handler(_request: Request,
-                                       exc: EntityNotFound) -> JSONResponse:
+    @app_.exception_handler(CustomBaseException)
+    async def custom_exception_handler(
+            _request: Request,
+            exc: CustomBaseException) -> JSONResponse:
         logger.error('%s', exc)
         return JSONResponse(
-            status_code=404,
+            status_code=exc.status_code,
             content=error_json_response(
                 detail=[ErrorJsonResponseDetail(
                     type=exc.__class__.__name__,

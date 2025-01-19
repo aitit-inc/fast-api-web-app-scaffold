@@ -49,7 +49,6 @@ class SampleItemApiListQueryDto(ApiListQueryDtoBaseModel):
     name__eq: str | None = None
     name__like: str | None = PydanticField(Query(
         default=None,
-
         description='Fuzzy search query for SampleItem name, following '
                     'PostgreSQL ILIKE semantics, e.g. "%foo%" or "f_o"',
     ))

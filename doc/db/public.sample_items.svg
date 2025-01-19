@@ -27,8 +27,8 @@
 <text text-anchor="start" x="53" y="-176.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
 <text text-anchor="start" x="67.7798" y="-176.9" font-family="Arial" font-size="14.00" fill="#666666">[integer]</text>
 <polygon fill="none" stroke="#000000" points="46,-135.5 46,-165.5 350,-165.5 350,-135.5 46,-135.5"/>
-<text text-anchor="start" x="53" y="-146.9" font-family="Arial" font-size="14.00" fill="#000000">is_deleted </text>
-<text text-anchor="start" x="120.69" y="-146.9" font-family="Arial" font-size="14.00" fill="#666666">[boolean]</text>
+<text text-anchor="start" x="53" y="-146.9" font-family="Arial" font-size="14.00" fill="#000000">uuid </text>
+<text text-anchor="start" x="83.345" y="-146.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar]</text>
 <polygon fill="none" stroke="#000000" points="46,-105.5 46,-135.5 350,-135.5 350,-105.5 46,-105.5"/>
 <text text-anchor="start" x="53" y="-116.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
 <text text-anchor="start" x="123.028" y="-116.9" font-family="Arial" font-size="14.00" fill="#666666">[timestamp with time zone]</text>

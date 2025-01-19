@@ -8,6 +8,7 @@ to ensure proper separation of concerns and maintainability.
 
 class CustomBaseException(Exception):
     """Base exception for all custom exceptions."""
+    _status_code: int
 
     def __init__(self, message: str, detail: str | None = None):
         self.message = message
@@ -20,3 +21,8 @@ class CustomBaseException(Exception):
             return f'{class_name}: {self.message}'
 
         return construct_message()
+
+    @property
+    def status_code(self) -> int:
+        """Get the status code associated with the exception."""
+        return self._status_code

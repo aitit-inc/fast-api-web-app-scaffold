@@ -3,13 +3,13 @@ from abc import abstractmethod, ABC
 from typing import Generic, TypeVar, Any
 
 from sqlalchemy import Select
+from sqlmodel import SQLModel
 
-from app.domain.entities.common import BaseSQLModel
 from app.domain.value_objects.api_query import ApiListQuery
 
 # A generic type variable representing the type of entities
 IdT = TypeVar('IdT', int, str)
-EntityT = TypeVar('EntityT', bound=BaseSQLModel)
+EntityT = TypeVar('EntityT', bound=SQLModel)
 UpdateT = dict[str, Any]
 
 FiltersType = dict[str, Any] | None

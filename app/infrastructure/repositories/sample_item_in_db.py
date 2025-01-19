@@ -1,16 +1,14 @@
 """SampleItem repository in DB"""
 from datetime import datetime
 from logging import getLogger
-from typing import Callable, Any
+from typing import Callable
 
-from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.sample_item import SampleItem
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory, SampleItemByUUIDRepository
-from app.domain.value_objects.api_query import ApiListQuery
-from app.infrastructure.repositories.base import InDBQueryFactoryTrait, \
+from app.infrastructure.repositories.base import InDBBaseQueryFactory, \
     InDBBaseEntityRepository
 
 logger = getLogger('uvicorn')
@@ -33,17 +31,9 @@ class InDBSampleItemRepository(
 
 class InDBSampleItemQueryFactory(
     SampleItemQueryFactory,
-    InDBQueryFactoryTrait[SampleItem]):
+    InDBBaseQueryFactory[SampleItem]):
     """In-DB SampleItem query."""
-
-    def list_query(
-            self,
-            api_query: ApiListQuery,
-            *args: Any,
-            **kwargs: Any,
-    ) -> Select[tuple[SampleItem]]:
-        """list query."""
-        return self._list_query(api_query, SampleItem)
+    _entity_cls = SampleItem
 
 
 class InDBSampleItemByUUIDRepository(

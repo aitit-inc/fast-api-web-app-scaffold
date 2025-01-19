@@ -1,10 +1,8 @@
 """Common classes and functions for entities."""
-from datetime import datetime
 from typing import Any
 
-from sqlalchemy.sql import func
 from sqlalchemy.types import DateTime
-from sqlmodel import Column, Field, SQLModel
+from sqlmodel import Column, Field
 
 
 # pylint: disable=invalid-name
@@ -26,20 +24,3 @@ def DatetimeWithTimeZone(
 
 
 MAX_LEN_SHORT = 256
-
-
-class BaseSQLModel(SQLModel):
-    """Base SQLModel."""
-    id: int | str | None
-
-    created_at: datetime | None = DatetimeWithTimeZone(
-        server_default=func.now(),  # pylint: disable=not-callable
-        nullable=False,
-        default=None)
-    updated_at: datetime | None = DatetimeWithTimeZone(
-        server_default=func.now(),  # pylint: disable=not-callable
-        nullable=False,
-        default=None,
-        onupdate=func.now(),  # pylint: disable=not-callable
-    )
-    deleted_at: datetime | None = DatetimeWithTimeZone(default=None)

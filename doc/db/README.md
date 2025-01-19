@@ -6,6 +6,7 @@
 | ---- | ------- | ------- | ---- |
 | [public.alembic_version](public.alembic_version.md) | 1 |  | BASE TABLE |
 | [public.sample_items](public.sample_items.md) | 7 |  | BASE TABLE |
+| [public.users](public.users.md) | 12 |  | BASE TABLE |
 
 ## Relations
 

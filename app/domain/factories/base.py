@@ -10,16 +10,16 @@ creation logic.
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Any
 
-T = TypeVar('T', covariant=True)
+T_co = TypeVar('T_co', covariant=True)
 
 
-class BaseEntityFactory(Generic[T], ABC):
+class BaseEntityFactory(Generic[T_co], ABC):
     """
     Base factory class for creating domain entities.
     """
 
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> T:
+    def __call__(self, *args: Any, **kwargs: Any) -> T_co:
         """
         Abstract method to create an instance of a domain entity.
     

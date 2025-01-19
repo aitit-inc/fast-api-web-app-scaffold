@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     origins: list[str] = ['*']
     log_level_str: str = 'INFO'
 
+    # auth
+    issuer: str = 'https://fawapp.com'
+    audience: str = 'https://fawapp.com'
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 60 * 24 * 7
+    token_secret_key: str = 'you_must_change_this_key'
+    token_algorithm: str = 'HS256'
+
     @property
     def log_level(self) -> int:
         """Get log level."""
