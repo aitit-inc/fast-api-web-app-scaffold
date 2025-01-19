@@ -32,13 +32,14 @@ services:
       <<: *default-healthcheck
     restart: always
     volumes:
-      - redis/data:/data
+      - ./redis/data:/data
   app:
     build: .
     container_name: fawapp-app
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-config app/log_config.json
     depends_on:
       - db
+      - redis
     expose:
       - "8000"
     healthcheck:
