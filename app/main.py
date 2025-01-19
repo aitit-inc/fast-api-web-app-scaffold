@@ -11,6 +11,8 @@ from fastapi.openapi.utils import get_openapi
 from app.di_container import Container
 from app.infrastructure.config.config import get_settings
 from app.interfaces.controllers.base import router
+from app.interfaces.middlewares.auth_middleware import \
+    AccessTokenAuthorizationMiddleware
 from app.interfaces.middlewares.error_handlers import app_error_handlers
 
 logger = getLogger('uvicorn')
@@ -57,10 +59,11 @@ def create_app() -> FastAPI:
         allow_headers=['*'],
     )
 
-    # _app.add_middleware(
-    #     TokenVerificationMiddleware,
-    #     session_factory=_db.session,
-    # )
+    _app.add_middleware(
+        AccessTokenAuthorizationMiddleware,
+        jwt_token_service=container.jwt_token_service(),
+    )
+
     # _app.mount('/admin', admin_app)
 
     def custom_openapi() -> dict[str, Any]:

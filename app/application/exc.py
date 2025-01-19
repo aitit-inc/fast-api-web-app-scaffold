@@ -23,6 +23,11 @@ class TokenExpired(CustomBaseException):
 
 
 class Unauthorized(CustomBaseException):
+    """Raised when a user is not authenticated."""
+    _status_code = 401
+
+
+class Forbidden(CustomBaseException):
     """Raised when a user is not authorized to perform an action."""
     _status_code = 403
 

@@ -11,7 +11,7 @@ from typing import Callable
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dto.auth import JwtPayloadRead
@@ -20,22 +20,25 @@ from app.application.use_cases.auth.authenticate import AuthenticateUseCase
 from app.application.use_cases.auth.common import jwt_payload_to_read
 from app.application.use_cases.auth.get_me import GetMeUseCase
 from app.application.use_cases.auth.refresh import RefreshTokenUseCase
+from app.application.use_cases.user.get_by_uuid import UserGetByUUIDUseCase
 from app.domain.factories.auth import JwtPayloadFactory
 from app.domain.repositories.user import UserByEmailRepository, \
     UserByUUIDRepository
 from app.domain.services.auth import Token, UserAuthService, \
-    JwtTokenService
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+    JwtTokenService, JwtPayload
+from app.interfaces.controllers.v1.path import AUTH_PREFIX, TOKEN_ENDPOINT, \
+    REFRESH_ENDPOINT, EXPLICIT_TOKEN_ME_ENDPOINT
+from app.interfaces.middlewares.auth_middleware import \
+    get_token_payload, oauth2_scheme
 
 router = APIRouter(
-    prefix='/auth',
+    prefix=AUTH_PREFIX,
     tags=['auth'],
 )
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-@router.post('/token')
+@router.post(TOKEN_ENDPOINT)
 @inject
 async def login_for_access_token(
         form_data: OAuth2PasswordRequestForm = Depends(),
@@ -97,7 +100,7 @@ async def login_for_access_token(
             return token
 
 
-@router.post('/token/refresh')
+@router.post(REFRESH_ENDPOINT)
 @inject
 async def refresh(
         token: str = Depends(oauth2_scheme),
@@ -153,27 +156,23 @@ async def refresh(
 @router.get('/token/authorize')
 @inject
 async def authorize(
-        token: str = Depends(oauth2_scheme),
-        jwt_token_service: JwtTokenService = Depends(
-            Provide['jwt_token_service']),
+        payload: JwtPayload = Depends(
+            get_token_payload
+        ),
 ) -> JwtPayloadRead:
     """
     A sample endpoint to verify JWT token validation.
     
-    This endpoint simply demonstrates how to validate a JWT token for an
-    authenticated user session. It does not perform any additional logic 
-    other than serving as a placeholder or validation check during 
-    development.
-
+    This endpoint demonstrates how to retrieve the validated JWT payload that 
+    the authentication middleware has already processed. It primarily serves 
+    as an example for extracting and returning the payload during development.
+    
     Args:
-        token (str): A JWT token string to be validated.
-        jwt_token_service (JwtTokenService): A callable that provides the
-            JwtTokenService to verify JWT tokens.
+        payload (JwtPayload): The JWT payload extracted from the request.
     
     Returns:
         JwtPayloadRead: A read model of the JWT payload.
     """
-    payload = jwt_token_service.verify_token(token)
     read_model = jwt_payload_to_read(payload)
 
     return read_model
@@ -182,6 +181,46 @@ async def authorize(
 @router.get('/token/me')
 @inject
 async def read_users_me(
+        payload: JwtPayload = Depends(
+            get_token_payload
+        ),
+        session_factory: Callable[[], AsyncSession] = Depends(
+            Provide['db_session_factory']),
+        user_repository_factory: Callable[
+            [AsyncSession], UserByUUIDRepository] = Depends(
+            Provide['user_by_uuid_repository']),
+) -> UserReadDto:
+    """
+    Retrieve the authenticated user's information using their JWT token.
+    
+    This endpoint demonstrates how to use the authentication middleware to
+    retrieve the already verified JWT payload, which includes essential user
+    information such as the user ID. Using the user ID extracted from the 
+    payload, this endpoint queries the database to fetch and return the 
+    user's data in a structured format.
+    
+    Args:
+        payload (JwtPayload): The JWT payload extracted from the request and
+            verified by the authentication middleware.
+        session_factory (Callable[[], AsyncSession]): A callable that provides
+            an asynchronous database session.
+        user_repository_factory 
+            (Callable[[AsyncSession], UserByUUIDRepository]):
+            A callable that supplies a repository for retrieving user
+            information using their UUID.
+    """
+    async with session_factory() as db_session:
+        async with db_session.begin():
+            user_repository = user_repository_factory(db_session)
+            use_case = UserGetByUUIDUseCase(user_repository)
+            read_data = await use_case(payload.sub, None, None)
+
+            return read_data
+
+
+@router.get(EXPLICIT_TOKEN_ME_ENDPOINT)
+@inject
+async def explicit_auth_and_read_users_me(
         token: str = Depends(oauth2_scheme),
         session_factory: Callable[[], AsyncSession] = Depends(
             Provide['db_session_factory']),
@@ -195,9 +234,10 @@ async def read_users_me(
     """
     Retrieve the authenticated user's information using their JWT token.
     
-    This endpoint decodes the JWT token to extract user details, retrieves 
-    the user's information from the database, and returns it.
-
+    This endpoint explicitly implements token verification within the 
+    endpoint, serving as an example of how to validate a JWT token and 
+    authenticate a user to retrieve their information from the database.
+    
     Args:
         token (str): A JWT token string representing the authenticated user.
         session_factory (Callable[[], AsyncSession]): A callable that provides
@@ -210,7 +250,7 @@ async def read_users_me(
     
     Returns:
         UserReadDto: A read model of the user's information.
-
+    
     Raises:
         HTTPException: If the JWT token is invalid or the user cannot be found.
     """

@@ -10,9 +10,10 @@ from app.application.dto.sample_item import SampleItemGetQuery, \
 from app.application.use_cases.sample_item.by_uuid.get import \
     SampleItemGetByUUIDUseCase
 from app.domain.repositories.sample_item import SampleItemByUUIDRepository
+from app.interfaces.controllers.v1.path import SAMPLE_ITEMS_BY_UUID_PREFIX
 
 router = APIRouter(
-    prefix='/sample-items-by-uuid',
+    prefix=SAMPLE_ITEMS_BY_UUID_PREFIX,
     tags=['sample-items-by-uuid'],
 )
 

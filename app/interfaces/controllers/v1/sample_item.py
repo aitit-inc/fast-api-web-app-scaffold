@@ -25,10 +25,11 @@ from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
+from app.interfaces.controllers.v1.path import SAMPLE_ITEMS_PREFIX
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
-    prefix='/sample-items',
+    prefix=SAMPLE_ITEMS_PREFIX,
     tags=['sample-items'],
 )
 
