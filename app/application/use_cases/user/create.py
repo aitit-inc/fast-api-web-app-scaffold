@@ -6,7 +6,7 @@ from app.application.use_cases.base import AsyncBaseCreateUseCase
 from app.application.use_cases.user.common import user_to_read
 from app.domain.entities.user import User
 from app.domain.repositories.user import UserByUUIDRepository
-from app.domain.services.auth import UserAuthService
+from app.domain.services.token_auth import UserTokenAuthService
 
 
 class UserCreateUseCase(
@@ -19,7 +19,7 @@ class UserCreateUseCase(
     def __init__(
             self,
             repository: UserByUUIDRepository,
-            user_auth_service: UserAuthService,
+            user_auth_service: UserTokenAuthService,
     ):
         super().__init__(repository)
         self._user_auth_service = user_auth_service

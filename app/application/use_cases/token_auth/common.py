@@ -1,8 +1,8 @@
 """Common functions for auth use cases."""
 from datetime import datetime, timezone
 
-from app.domain.services.auth import JwtPayload
-from app.application.dto.auth import JwtPayloadRead
+from app.domain.services.token_auth import JwtPayload
+from app.application.dto.token_auth import JwtPayloadRead
 
 
 def jwt_payload_to_read(payload: JwtPayload) -> JwtPayloadRead:

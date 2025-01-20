@@ -1,12 +1,4 @@
-"""Auth controller.
-
-OAuth2.0 (JWT token) authentication endpoint.
---> https://fastapi.tiangolo.com/ja/tutorial/security/oauth2-jwt/
---> refresh: https://zenn.dev/tnakano/articles/072ee0fcd93433
-
-Session cookie authentication.
---> https://medium.com/@InsightfulEnginner/session-based-authentication-with-fastapi-a-step-by-step-guide-ca19e98ce0f9
-"""
+"""Token auth controller."""
 from typing import Callable
 
 from dependency_injector.wiring import Provide, inject
@@ -14,26 +6,28 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.dto.auth import JwtPayloadRead
+from app.application.dto.token_auth import JwtPayloadRead
 from app.application.dto.user import UserReadDto
-from app.application.use_cases.auth.authenticate import AuthenticateUseCase
-from app.application.use_cases.auth.common import jwt_payload_to_read
-from app.application.use_cases.auth.get_me import GetMeUseCase
-from app.application.use_cases.auth.refresh import RefreshTokenUseCase
+from app.application.use_cases.token_auth.authenticate import \
+    AuthenticateUseCase
+from app.application.use_cases.token_auth.common import jwt_payload_to_read
+from app.application.use_cases.token_auth.get_me import GetMeUseCase
+from app.application.use_cases.token_auth.refresh import RefreshTokenUseCase
 from app.application.use_cases.user.get_by_uuid import UserGetByUUIDUseCase
-from app.domain.factories.auth import JwtPayloadFactory
+from app.domain.factories.token_auth import JwtPayloadFactory
 from app.domain.repositories.user import UserByEmailRepository, \
     UserByUUIDRepository
-from app.domain.services.auth import Token, UserAuthService, \
+from app.domain.services.token_auth import Token, UserTokenAuthService, \
     JwtTokenService, JwtPayload
-from app.interfaces.controllers.v1.path import AUTH_PREFIX, TOKEN_ENDPOINT, \
+from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
+    TOKEN_ENDPOINT, \
     REFRESH_ENDPOINT, EXPLICIT_TOKEN_ME_ENDPOINT
-from app.interfaces.middlewares.auth_middleware import \
+from app.interfaces.middlewares.token_auth_middleware import \
     get_token_payload, oauth2_scheme
 
 router = APIRouter(
-    prefix=AUTH_PREFIX,
-    tags=['auth'],
+    prefix=AUTH_TOKEN_PREFIX,
+    tags=['auth-token'],
 )
 
 
@@ -48,7 +42,7 @@ async def login_for_access_token(
             [AsyncSession], UserByEmailRepository] = Depends(
             Provide['user_by_email_repository']),
         user_auth_service_factory: Callable[
-            [UserByEmailRepository], UserAuthService] = Depends(
+            [UserByEmailRepository], UserTokenAuthService] = Depends(
             Provide['user_auth_service_factory']),
         jwt_payload_factory: JwtPayloadFactory = Depends(
             Provide['jwt_payload_factory']),
@@ -153,7 +147,7 @@ async def refresh(
             return new_token
 
 
-@router.get('/token/authorize')
+@router.get('/authorize')
 @inject
 async def authorize(
         payload: JwtPayload = Depends(
@@ -178,7 +172,7 @@ async def authorize(
     return read_model
 
 
-@router.get('/token/me')
+@router.get('/me')
 @inject
 async def read_users_me(
         payload: JwtPayload = Depends(

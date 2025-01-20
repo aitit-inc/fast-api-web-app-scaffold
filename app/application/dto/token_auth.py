@@ -1,7 +1,7 @@
 """Auth dtos."""
 from datetime import datetime
 
-from app.domain.services.auth import JwtPayload
+from app.domain.services.token_auth import JwtPayload
 
 
 class JwtPayloadRead(JwtPayload):

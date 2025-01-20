@@ -13,21 +13,21 @@ from passlib.context import CryptContext
 from app.application.exc import Unauthorized
 from app.domain.entities.user import User
 from app.domain.repositories.user import UserByEmailRepository
-from app.domain.services.auth import UserAuthService, JwtTokenService, \
-    JwtPayload
+from app.domain.services.token_auth import UserTokenAuthService, \
+    JwtTokenService, JwtPayload
 
 logger = getLogger('uvicorn')
 
 
-class InDBUserAuthService(UserAuthService):
+class InDBUserTokenAuthService(UserTokenAuthService):
     """In DB user auth service."""
 
     @staticmethod
     def create_factory(
             get_now: Callable[[], datetime],
-    ) -> 'Callable[[UserByEmailRepository], UserAuthService]':
+    ) -> 'Callable[[UserByEmailRepository], UserTokenAuthService]':
         """Create factory."""
-        return lambda user_repository: InDBUserAuthService(
+        return lambda user_repository: InDBUserTokenAuthService(
             user_repository, get_now
         )
 

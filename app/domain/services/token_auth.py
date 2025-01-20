@@ -32,8 +32,8 @@ class JwtPayload(BaseModel):
     is_refresh_token: bool
 
 
-class UserAuthService(ABC):
-    """User authentication and authorization services"""
+class UserTokenAuthService(ABC):
+    """User jwt token authentication and authorization services"""
 
     @abstractmethod
     async def authenticate(self, username: str, password: str) -> User | None:

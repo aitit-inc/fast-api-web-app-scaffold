@@ -11,7 +11,7 @@ from fastapi.openapi.utils import get_openapi
 from app.di_container import Container
 from app.infrastructure.config.config import get_settings
 from app.interfaces.controllers.base import router
-from app.interfaces.middlewares.auth_middleware import \
+from app.interfaces.middlewares.token_auth_middleware import \
     AccessTokenAuthorizationMiddleware
 from app.interfaces.middlewares.error_handlers import app_error_handlers
 

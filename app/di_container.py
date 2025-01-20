@@ -4,7 +4,7 @@ import logging
 from dependency_injector import containers, providers
 from shortuuid import uuid
 
-from app.domain.factories.auth import JwtPayloadFactory
+from app.domain.factories.token_auth import JwtPayloadFactory
 from app.domain.factories.sample_item import SampleItemFactory
 from app.infrastructure.config import config
 from app.infrastructure.database.database import Database
@@ -13,7 +13,7 @@ from app.infrastructure.repositories.sample_item_in_db import \
     InDBSampleItemByUUIDRepository
 from app.infrastructure.repositories.user_in_db import InDBUserRepository, \
     InDBUserByEmailRepository, InDBUserByUUIDRepository, InDBUserQueryFactory
-from app.infrastructure.services.auth import InDBUserAuthService, \
+from app.infrastructure.services.token_auth import InDBUserTokenAuthService, \
     JwtTokenServiceImpl
 
 logger = logging.getLogger('uvicorn')
@@ -28,7 +28,7 @@ class Container(containers.DeclarativeContainer):
             'app.interfaces.controllers.v1.base',
 
             # V1 app endpoints
-            'app.interfaces.controllers.v1.auth',
+            'app.interfaces.controllers.v1.token_auth',
             'app.interfaces.controllers.v1.sample_item',
             'app.interfaces.controllers.v1.sample_item_by_uuid',
 
@@ -81,7 +81,7 @@ class Container(containers.DeclarativeContainer):
     )
 
     user_auth_service_factory = providers.Factory(
-        InDBUserAuthService.create_factory,
+        InDBUserTokenAuthService.create_factory,
         get_now=get_now,
     )
     jwt_payload_factory = providers.Factory(

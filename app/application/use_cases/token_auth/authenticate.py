@@ -4,8 +4,8 @@ from typing import Any
 
 from app.application.exc import InvalidCredentials
 from app.application.use_cases.base import AsyncBaseUseCase
-from app.domain.factories.auth import JwtPayloadFactory
-from app.domain.services.auth import Token, UserAuthService, \
+from app.domain.factories.token_auth import JwtPayloadFactory
+from app.domain.services.token_auth import Token, UserTokenAuthService, \
     TokenType, JwtTokenService
 
 logger = getLogger('uvicorn')
@@ -18,7 +18,7 @@ class AuthenticateUseCase(
 
     def __init__(
             self,
-            user_auth_service: UserAuthService,
+            user_auth_service: UserTokenAuthService,
             jwt_payload_factory: JwtPayloadFactory,
             jwt_token_service: JwtTokenService,
     ) -> None:

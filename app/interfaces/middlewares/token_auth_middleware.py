@@ -10,10 +10,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from app.application.exc import Unauthorized
-from app.domain.services.auth import JwtTokenService, JwtPayload
+from app.domain.services.token_auth import JwtTokenService, JwtPayload
 from app.interfaces.controllers.path import API_BASE_PATH, API_V1_PATH, \
     HEALTH_CHECK_ENDPOINT
-from app.interfaces.controllers.v1.path import AUTH_PREFIX, TOKEN_ENDPOINT, \
+from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
     REFRESH_ENDPOINT, SAMPLE_ITEMS_PREFIX, SAMPLE_ITEMS_BY_UUID_PREFIX, \
     EXPLICIT_TOKEN_ME_ENDPOINT
 from app.interfaces.middlewares.error_handlers import \
@@ -31,9 +31,9 @@ class AccessTokenAuthorizationMiddleware(BaseHTTPMiddleware):
         '/docs', '/redoc', '/openapi.json',
 
         # Auth
-        f'{API_V1_PATH}{AUTH_PREFIX}{TOKEN_ENDPOINT}',
-        f'{API_V1_PATH}{AUTH_PREFIX}{REFRESH_ENDPOINT}',
-        f'{API_BASE_PATH}{AUTH_PREFIX}{EXPLICIT_TOKEN_ME_ENDPOINT}',
+        f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}',
+        f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}{REFRESH_ENDPOINT}',
+        f'{API_BASE_PATH}{AUTH_TOKEN_PREFIX}{EXPLICIT_TOKEN_ME_ENDPOINT}',
 
         # Admin console
         # '/admin', '/admin/', '/admin/*',

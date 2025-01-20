@@ -13,7 +13,7 @@ from app.application.use_cases.user.common import user_list_transformer
 from app.application.use_cases.user.create import UserCreateUseCase
 from app.application.use_cases.user.list import UserListUseCase
 from app.domain.repositories.user import UserQueryFactory, UserByUUIDRepository
-from app.domain.services.auth import UserAuthService
+from app.domain.services.token_auth import UserTokenAuthService
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -72,7 +72,7 @@ async def create_user(
             [AsyncSession], UserByUUIDRepository] = Depends(
             Provide['user_by_uuid_repository']),
         user_auth_service_factory: Callable[
-            [UserByUUIDRepository], UserAuthService] = Depends(
+            [UserByUUIDRepository], UserTokenAuthService] = Depends(
             Provide['user_auth_service_factory']),
 ) -> UserReadDto:
     """

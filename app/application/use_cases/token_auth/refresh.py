@@ -4,9 +4,9 @@ from typing import Any
 
 from app.application.exc import Unauthorized
 from app.application.use_cases.base import AsyncBaseUseCase
-from app.domain.factories.auth import JwtPayloadFactory
+from app.domain.factories.token_auth import JwtPayloadFactory
 from app.domain.repositories.user import UserByUUIDRepository
-from app.domain.services.auth import Token, JwtTokenService, \
+from app.domain.services.token_auth import Token, JwtTokenService, \
     TokenType
 
 logger = getLogger('uvicorn')
