@@ -1,7 +1,7 @@
 """Common functions for auth use cases."""
 from datetime import datetime, timezone
 
-from app.domain.services.token_auth import JwtPayload
+from app.domain.services.auth.token import JwtPayload
 from app.application.dto.token_auth import JwtPayloadRead
 
 

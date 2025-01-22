@@ -10,12 +10,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from app.application.exc import Unauthorized
-from app.domain.services.token_auth import JwtTokenService, JwtPayload
+from app.domain.services.auth.token import JwtTokenService, JwtPayload
 from app.interfaces.controllers.path import API_BASE_PATH, API_V1_PATH, \
     HEALTH_CHECK_ENDPOINT
 from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
     REFRESH_ENDPOINT, SAMPLE_ITEMS_PREFIX, SAMPLE_ITEMS_BY_UUID_PREFIX, \
-    EXPLICIT_TOKEN_ME_ENDPOINT
+    EXPLICIT_TOKEN_ME_ENDPOINT, AUTH_SESSION_PREFIX
 from app.interfaces.middlewares.error_handlers import \
     return_error_json_response
 
@@ -33,7 +33,11 @@ class AccessTokenAuthorizationMiddleware(BaseHTTPMiddleware):
         # Auth
         f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}',
         f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}{REFRESH_ENDPOINT}',
-        f'{API_BASE_PATH}{AUTH_TOKEN_PREFIX}{EXPLICIT_TOKEN_ME_ENDPOINT}',
+        f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}{EXPLICIT_TOKEN_ME_ENDPOINT}',
+
+        # TODO: Add logic to switch between token-based authentication and
+        #  session cookie authentication.
+        f'{API_V1_PATH}{AUTH_SESSION_PREFIX}/*',
 
         # Admin console
         # '/admin', '/admin/', '/admin/*',

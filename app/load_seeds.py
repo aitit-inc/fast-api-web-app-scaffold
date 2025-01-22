@@ -9,7 +9,7 @@ import click
 # NEED this when executing this file from other directory.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.infrastructure.config.config import get_settings, \
+from app.config import get_settings, \
     get_settings_for_testing
 from app.infrastructure.database.database import Database
 

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable
 
 from app.domain.factories.base import BaseEntityFactory
-from app.domain.services.token_auth import JwtPayload
+from app.domain.services.auth.token import JwtPayload
 from app.domain.services.time import to_utc
 
 

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from app.domain.entities.sample_item import SampleItem
-from app.infrastructure.config.config import Settings
+from app.config import Settings
 
 API_BASE = '/api/v1'
 

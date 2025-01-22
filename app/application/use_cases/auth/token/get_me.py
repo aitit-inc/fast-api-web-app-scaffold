@@ -7,7 +7,7 @@ from app.application.exc import EntityNotFound
 from app.application.use_cases.base import AsyncBaseUseCase
 from app.application.use_cases.user.common import user_to_read
 from app.domain.repositories.user import UserByUUIDRepository
-from app.domain.services.token_auth import JwtTokenService
+from app.domain.services.auth.token import JwtTokenService
 
 logger = getLogger('uvicorn')
 

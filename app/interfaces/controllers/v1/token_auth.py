@@ -8,17 +8,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dto.token_auth import JwtPayloadRead
 from app.application.dto.user import UserReadDto
-from app.application.use_cases.token_auth.authenticate import \
+from app.application.use_cases.auth.token.authenticate import \
     AuthenticateUseCase
-from app.application.use_cases.token_auth.common import jwt_payload_to_read
-from app.application.use_cases.token_auth.get_me import GetMeUseCase
-from app.application.use_cases.token_auth.refresh import RefreshTokenUseCase
+from app.application.use_cases.auth.token.common import jwt_payload_to_read
+from app.application.use_cases.auth.token.get_me import GetMeUseCase
+from app.application.use_cases.auth.token.refresh import RefreshTokenUseCase
 from app.application.use_cases.user.get_by_uuid import UserGetByUUIDUseCase
 from app.domain.factories.token_auth import JwtPayloadFactory
 from app.domain.repositories.user import UserByEmailRepository, \
     UserByUUIDRepository
-from app.domain.services.token_auth import Token, UserTokenAuthService, \
-    JwtTokenService, JwtPayload
+from app.domain.services.auth.token import Token, JwtTokenService, JwtPayload
+from app.domain.services.auth.base import UserAuthService
 from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
     TOKEN_ENDPOINT, \
     REFRESH_ENDPOINT, EXPLICIT_TOKEN_ME_ENDPOINT
@@ -42,7 +42,7 @@ async def login_for_access_token(
             [AsyncSession], UserByEmailRepository] = Depends(
             Provide['user_by_email_repository']),
         user_auth_service_factory: Callable[
-            [UserByEmailRepository], UserTokenAuthService] = Depends(
+            [UserByEmailRepository], UserAuthService] = Depends(
             Provide['user_auth_service_factory']),
         jwt_payload_factory: JwtPayloadFactory = Depends(
             Provide['jwt_payload_factory']),

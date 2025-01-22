@@ -9,7 +9,7 @@ from sqlalchemy.engine import Connection
 from sqlmodel import SQLModel
 
 import app.domain.entities as entities
-from app.infrastructure.config.config import get_settings, \
+from app.config import get_settings, \
     get_settings_for_testing
 from app.infrastructure.database.database import Database
 

@@ -4,8 +4,6 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from app.domain.entities.user import User
-
 
 class TokenType(str, Enum):
     """Token type enum"""
@@ -30,18 +28,6 @@ class JwtPayload(BaseModel):
     jti: str | None = None
     email: str
     is_refresh_token: bool
-
-
-class UserTokenAuthService(ABC):
-    """User jwt token authentication and authorization services"""
-
-    @abstractmethod
-    async def authenticate(self, username: str, password: str) -> User | None:
-        """Authenticate user"""
-
-    @abstractmethod
-    def hash_password(self, password: str) -> str:
-        """Hash password"""
 
 
 class JwtTokenService(ABC):

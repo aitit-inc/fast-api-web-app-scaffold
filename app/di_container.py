@@ -4,15 +4,19 @@ import logging
 from dependency_injector import containers, providers
 from shortuuid import uuid
 
-from app.domain.factories.token_auth import JwtPayloadFactory
+from app import config
+from app.application.dto.session_auth import SessionCookieConfig, SameSite
 from app.domain.factories.sample_item import SampleItemFactory
-from app.infrastructure.config import config
+from app.domain.factories.token_auth import JwtPayloadFactory
 from app.infrastructure.database.database import Database
+from app.infrastructure.repositories.login_session_in_db import \
+    InDBLoginSessionRepository
 from app.infrastructure.repositories.sample_item_in_db import \
     InDBSampleItemRepository, InDBSampleItemQueryFactory, \
     InDBSampleItemByUUIDRepository
 from app.infrastructure.repositories.user_in_db import InDBUserRepository, \
     InDBUserByEmailRepository, InDBUserByUUIDRepository, InDBUserQueryFactory
+from app.infrastructure.services.login_session import LoginSessionServiceImpl
 from app.infrastructure.services.token_auth import InDBUserTokenAuthService, \
     JwtTokenServiceImpl
 
@@ -29,6 +33,7 @@ class Container(containers.DeclarativeContainer):
 
             # V1 app endpoints
             'app.interfaces.controllers.v1.token_auth',
+            'app.interfaces.controllers.v1.session_auth',
             'app.interfaces.controllers.v1.sample_item',
             'app.interfaces.controllers.v1.sample_item_by_uuid',
 
@@ -99,3 +104,23 @@ class Container(containers.DeclarativeContainer):
         issuer=conf.issuer,
         audience=conf.audience,
     )
+
+    login_session_repository_factory = providers.Factory(
+        InDBLoginSessionRepository.factory,
+        get_now=get_now,
+    )
+    login_session_service = providers.Factory(
+        LoginSessionServiceImpl,
+        login_session_secret_key=conf.login_session_secret_key,
+        login_session_expire_minutes=conf.login_session_expire_minutes,
+        get_now=get_now,
+        uuid_gen=uuid,
+    )
+    _session_cookie_config = SessionCookieConfig(
+        key=conf.login_session_cookie_name,
+        httponly=conf.login_session_cookie_httponly,
+        max_age=conf.login_session_expire_minutes * 60,
+        samesite=SameSite(conf.login_session_cookie_samesite),
+        secure=conf.login_session_cookie_secure,
+    )
+    session_cookie_config = providers.Object(_session_cookie_config)

@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     token_secret_key: str = 'you_must_change_this_key'
     token_algorithm: str = 'HS256'
 
+    login_session_secret_key: str = 'you_must_change_this_key'
+    login_session_expire_minutes: int = 60 * 24 * 7
+    login_session_cookie_name: str = 'session'
+    login_session_cookie_secure: bool = True
+    login_session_cookie_httponly: bool = True
+    login_session_cookie_samesite: str = 'lax'
+
     @property
     def log_level(self) -> int:
         """Get log level."""

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from app.di_container import Container
-from app.infrastructure.config.config import get_settings
+from app.config import get_settings
 from app.interfaces.controllers.base import router
 from app.interfaces.middlewares.token_auth_middleware import \
     AccessTokenAuthorizationMiddleware

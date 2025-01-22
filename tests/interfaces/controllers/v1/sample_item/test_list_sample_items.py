@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.infrastructure.config.config import get_settings_for_testing
+from app.config import get_settings_for_testing
 from app.main import app
 from tests.libs.mocks import add_sample_item
 from tests.libs.utils import reset_tables, API_BASE, db_engine, \
