@@ -8,12 +8,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from app.di_container import Container
 from app.config import get_settings
+from app.di_container import Container
 from app.interfaces.controllers.base import router
-from app.interfaces.middlewares.token_auth_middleware import \
-    AccessTokenAuthorizationMiddleware
 from app.interfaces.middlewares.error_handlers import app_error_handlers
+from app.interfaces.middlewares.token_auth_middleware import \
+    AuthorizationMiddleware
 
 logger = getLogger('uvicorn')
 
@@ -60,8 +60,11 @@ def create_app() -> FastAPI:
     )
 
     _app.add_middleware(
-        AccessTokenAuthorizationMiddleware,
-        jwt_token_service=container.jwt_token_service(),
+        AuthorizationMiddleware,
+        access_token_authorizer=container.access_token_authorizer(),
+        session_cookie_authorizer= \
+            container.session_cookie_authorizer_factory()(_db.session),
+        auth_method=config.auth_method,
     )
 
     # _app.mount('/admin', admin_app)

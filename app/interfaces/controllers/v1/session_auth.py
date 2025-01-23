@@ -11,7 +11,8 @@ from app.domain.repositories.login_session import LoginSessionRepository
 from app.domain.repositories.user import UserByEmailRepository
 from app.domain.services.auth.base import UserAuthService
 from app.domain.services.auth.login_session import LoginSessionService
-from app.interfaces.controllers.v1.path import AUTH_SESSION_PREFIX
+from app.interfaces.controllers.v1.path import AUTH_SESSION_PREFIX, \
+    SESSION_LOGIN_ENDPOINT
 
 router = APIRouter(
     prefix=AUTH_SESSION_PREFIX,
@@ -20,7 +21,7 @@ router = APIRouter(
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-@router.post('/login')
+@router.post(SESSION_LOGIN_ENDPOINT)
 @inject
 async def login(
         data: LoginRequest,

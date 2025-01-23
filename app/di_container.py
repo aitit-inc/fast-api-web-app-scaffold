@@ -19,6 +19,8 @@ from app.infrastructure.repositories.user_in_db import InDBUserRepository, \
 from app.infrastructure.services.login_session import LoginSessionServiceImpl
 from app.infrastructure.services.token_auth import InDBUserTokenAuthService, \
     JwtTokenServiceImpl
+from app.interfaces.middlewares.authorizer import AccessTokenAuthorizer, \
+    SessionCookieAuthorizer
 
 logger = logging.getLogger('uvicorn')
 
@@ -124,3 +126,14 @@ class Container(containers.DeclarativeContainer):
         secure=conf.login_session_cookie_secure,
     )
     session_cookie_config = providers.Object(_session_cookie_config)
+
+    access_token_authorizer = providers.Factory(
+        AccessTokenAuthorizer,
+        jwt_token_service=jwt_token_service,
+    )
+    session_cookie_authorizer_factory = providers.Factory(
+        SessionCookieAuthorizer.create_factory,
+        login_session_repository_factory=login_session_repository_factory,
+        user_repository_factory=user_by_uuid_repository,
+        login_session_cookie_name=conf.login_session_cookie_name,
+    )

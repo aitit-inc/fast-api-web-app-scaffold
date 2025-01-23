@@ -1,4 +1,4 @@
-"""Authentication/Authorization Middlewares."""
+"""Authorization Middlewares."""
 import fnmatch
 from logging import getLogger
 from typing import Callable, Awaitable, cast
@@ -10,12 +10,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from app.application.exc import Unauthorized
-from app.domain.services.auth.token import JwtTokenService, JwtPayload
+from app.domain.services.auth.token import JwtPayload
 from app.interfaces.controllers.path import API_BASE_PATH, API_V1_PATH, \
     HEALTH_CHECK_ENDPOINT
 from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
     REFRESH_ENDPOINT, SAMPLE_ITEMS_PREFIX, SAMPLE_ITEMS_BY_UUID_PREFIX, \
-    EXPLICIT_TOKEN_ME_ENDPOINT, AUTH_SESSION_PREFIX
+    EXPLICIT_TOKEN_ME_ENDPOINT, AUTH_SESSION_PREFIX, SESSION_LOGIN_ENDPOINT
+from app.interfaces.middlewares.authorizer import AccessTokenAuthorizer, \
+    SessionCookieAuthorizer, AuthMethod
 from app.interfaces.middlewares.error_handlers import \
     return_error_json_response
 
@@ -24,20 +26,19 @@ logger = getLogger('uvicorn')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 
-class AccessTokenAuthorizationMiddleware(BaseHTTPMiddleware):
-    """Access Token Authorization Middleware."""
+class AuthorizationMiddleware(BaseHTTPMiddleware):
+    """Authorization Middleware."""
     _verification_excluded_paths: list[str] = [
         # API documentation
         '/docs', '/redoc', '/openapi.json',
 
-        # Auth
+        # session auth login
+        f'{API_V1_PATH}{AUTH_SESSION_PREFIX}{SESSION_LOGIN_ENDPOINT}',
+
+        # token auth login, refresh, custom
         f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}',
         f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}{REFRESH_ENDPOINT}',
         f'{API_V1_PATH}{AUTH_TOKEN_PREFIX}{EXPLICIT_TOKEN_ME_ENDPOINT}',
-
-        # TODO: Add logic to switch between token-based authentication and
-        #  session cookie authentication.
-        f'{API_V1_PATH}{AUTH_SESSION_PREFIX}/*',
 
         # Admin console
         # '/admin', '/admin/', '/admin/*',
@@ -55,10 +56,14 @@ class AccessTokenAuthorizationMiddleware(BaseHTTPMiddleware):
 
     def __init__(self,
                  app: ASGIApp,
-                 jwt_token_service: JwtTokenService,
+                 access_token_authorizer: AccessTokenAuthorizer,
+                 session_cookie_authorizer: SessionCookieAuthorizer,
+                 auth_method: AuthMethod,
                  ):
         super().__init__(app)
-        self._jwt_token_service = jwt_token_service
+        self._access_token_authorizer = access_token_authorizer
+        self._session_cookie_authorizer = session_cookie_authorizer
+        self._auth_method = auth_method
 
     async def dispatch(
             self,
@@ -71,27 +76,21 @@ class AccessTokenAuthorizationMiddleware(BaseHTTPMiddleware):
             # Skip verification for public paths
             return await call_next(request)
 
-        # Extract token from Authorization header
         try:
-            token = await oauth2_scheme(request)
-        except HTTPException as _err:
-            logger.warning('HTTPException: %s', _err)
-            token = None
+            if self._auth_method == AuthMethod.SESSION_COOKIE:
+                request = await self._session_cookie_authorizer.authorize(
+                    request)
+            elif self._auth_method == AuthMethod.BEARER_ACCESS_TOKEN:
+                request = await self._access_token_authorizer.authorize(
+                    request)
+            else:
+                logger.warning('Invalid auth method: %s', self._auth_method)
+                raise Unauthorized('Unauthorized.')
 
-        if token is None:
-            logger.warning(
-                'Failed to extract token from Authorization header.')
-            exc = Unauthorized('Invalid or missing token.')
-
+            return await call_next(request)
+        except Unauthorized as exc:
             return return_error_json_response(
                 exc, exc.status_code, exc.detail)
-
-        payload = self._jwt_token_service.verify_token(token)
-
-        request.state.user_id = payload.sub
-        request.state.payload = payload
-
-        return await call_next(request)
 
     def is_excluded_path(self, path: str) -> bool:
         """excluded path check"""
