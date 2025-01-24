@@ -21,7 +21,7 @@ class SampleItemCreateUseCase(
             query: None,
     ) -> SampleItem:
         data_dict = dto.model_dump()
-        data_dict['uuid'] = uuid()
+        data_dict['uuid'] = self._gen_uuid()
         return SampleItem.model_validate(data_dict)
 
     def _to_return_dto(
@@ -30,3 +30,7 @@ class SampleItemCreateUseCase(
             query: None,
     ) -> SampleItemReadDto:
         return sample_item_to_read(entity)
+
+    @staticmethod
+    def _gen_uuid() -> str:
+        return uuid()

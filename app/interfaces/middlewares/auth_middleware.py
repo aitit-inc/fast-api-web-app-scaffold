@@ -10,6 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from app.application.exc import Unauthorized
+from app.domain.entities.login_session import SessionData
 from app.domain.services.auth.token import JwtPayload
 from app.interfaces.controllers.path import API_BASE_PATH, API_V1_PATH, \
     HEALTH_CHECK_ENDPOINT
@@ -63,7 +64,7 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._access_token_authorizer = access_token_authorizer
         self._session_cookie_authorizer = session_cookie_authorizer
-        self._auth_method = auth_method
+        self._auth_method_value = auth_method
 
     async def dispatch(
             self,
@@ -101,6 +102,18 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
 
         return False
 
+    @property
+    def _auth_method(self) -> AuthMethod:
+        return self._auth_method_value
+
+
+def get_user_id(request: Request) -> str:
+    """Get user id."""
+    if not hasattr(request.state, 'user_id'):
+        raise HTTPException(status_code=401, detail='Unauthorized')
+
+    return cast(str, request.state.user_id)
+
 
 def get_token_payload(request: Request) -> JwtPayload:
     """Get token payload."""
@@ -108,3 +121,11 @@ def get_token_payload(request: Request) -> JwtPayload:
         raise HTTPException(status_code=401, detail='Unauthorized')
 
     return cast(JwtPayload, request.state.payload)
+
+
+def get_session_payload(request: Request) -> SessionData:
+    """Get session payload."""
+    if not hasattr(request.state, 'payload'):
+        raise HTTPException(status_code=401, detail='Unauthorized')
+
+    return cast(SessionData, request.state.payload)

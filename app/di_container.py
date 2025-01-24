@@ -118,6 +118,9 @@ class Container(containers.DeclarativeContainer):
         get_now=get_now,
         uuid_gen=uuid,
     )
+    login_session_cookie_name = providers.Object(
+        conf.login_session_cookie_name,
+    )
     _session_cookie_config = SessionCookieConfig(
         key=conf.login_session_cookie_name,
         httponly=conf.login_session_cookie_httponly,
@@ -134,6 +137,6 @@ class Container(containers.DeclarativeContainer):
     session_cookie_authorizer_factory = providers.Factory(
         SessionCookieAuthorizer.create_factory,
         login_session_repository_factory=login_session_repository_factory,
-        user_repository_factory=user_by_uuid_repository,
+        login_session_service=login_session_service,
         login_session_cookie_name=conf.login_session_cookie_name,
     )

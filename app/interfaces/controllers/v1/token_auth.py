@@ -17,12 +17,12 @@ from app.application.use_cases.user.get_by_uuid import UserGetByUUIDUseCase
 from app.domain.factories.token_auth import JwtPayloadFactory
 from app.domain.repositories.user import UserByEmailRepository, \
     UserByUUIDRepository
-from app.domain.services.auth.token import Token, JwtTokenService, JwtPayload
 from app.domain.services.auth.base import UserAuthService
+from app.domain.services.auth.token import Token, JwtTokenService, JwtPayload
 from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
     TOKEN_ENDPOINT, \
     REFRESH_ENDPOINT, EXPLICIT_TOKEN_ME_ENDPOINT
-from app.interfaces.middlewares.token_auth_middleware import \
+from app.interfaces.middlewares.auth_middleware import \
     get_token_payload, oauth2_scheme
 
 router = APIRouter(
@@ -147,9 +147,9 @@ async def refresh(
             return new_token
 
 
-@router.get('/authorize')
+@router.get('/verify')
 @inject
-async def authorize(
+async def verify(
         payload: JwtPayload = Depends(
             get_token_payload
         ),

@@ -7,11 +7,12 @@ from typing import Callable
 from fastapi import Request
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from itsdangerous import BadSignature, BadData, SignatureExpired
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exc import Unauthorized
 from app.domain.repositories.login_session import LoginSessionRepository
-from app.domain.repositories.user import UserByUUIDRepository
+from app.domain.services.auth.login_session import LoginSessionService
 from app.domain.services.auth.token import JwtTokenService
 
 logger = getLogger('uvicorn')
@@ -71,15 +72,14 @@ class SessionCookieAuthorizer(AuthorizerBase):
     def create_factory(
             login_session_repository_factory: Callable[
                 [AsyncSession], LoginSessionRepository],
-            user_repository_factory: Callable[
-                [AsyncSession], UserByUUIDRepository],
+            login_session_service: LoginSessionService,
             login_session_cookie_name: str,
     ) -> Callable[[Callable[[], AsyncSession]], 'SessionCookieAuthorizer']:
         """Create factory."""
         return lambda session_factory: SessionCookieAuthorizer(
             session_factory,
             login_session_repository_factory,
-            user_repository_factory,
+            login_session_service,
             login_session_cookie_name,
         )
 
@@ -88,14 +88,13 @@ class SessionCookieAuthorizer(AuthorizerBase):
             session_factory: Callable[[], AsyncSession],
             login_session_repository_factory: Callable[
                 [AsyncSession], LoginSessionRepository],
-            user_repository_factory: Callable[
-                [AsyncSession], UserByUUIDRepository],
+            login_session_service: LoginSessionService,
             login_session_cookie_name: str,
     ):
         self._login_session_repository_factory = \
             login_session_repository_factory
         self._session_factory = session_factory
-        self._user_repository_factory = user_repository_factory
+        self._login_session_service = login_session_service
         self._login_session_cookie_name = login_session_cookie_name
 
     async def authorize(self, request: Request) -> Request:
@@ -111,7 +110,6 @@ class SessionCookieAuthorizer(AuthorizerBase):
             async with db_session.begin():
                 login_session_repository = \
                     self._login_session_repository_factory(db_session)
-                user_repository = self._user_repository_factory(db_session)
 
                 session = await login_session_repository.get_by_id(
                     session_id)
@@ -120,13 +118,14 @@ class SessionCookieAuthorizer(AuthorizerBase):
                         'Failed to get session from DB by session_id.')
                     raise Unauthorized('Invalid or missing session.')
 
-                user = await user_repository.get_by_id(session.user_id)
-                if user is None:
-                    logger.warning(
-                        'Failed to get user from DB by user_id.')
-                    raise Unauthorized('Invalid or missing session.')
+                try:
+                    session_data = self._login_session_service.decode_session(
+                        session_id)
+                except (BadSignature, BadData, SignatureExpired) as err:
+                    logger.warning('Invalid session: %s', err)
+                    raise Unauthorized('Invalid or missing session.') from err
 
-            request.state.user_id = user.uuid
-            request.state.user = user
+            request.state.user_id = session_data.user_id
+            request.state.payload = session_data
 
             return request

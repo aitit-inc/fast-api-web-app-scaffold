@@ -43,7 +43,7 @@ class LoginUseCase(
             raise InvalidCredentials(
                 'Invalid email or password.')
 
-        session = await self._login_session_service.create_session(user.uuid)
+        session = self._login_session_service.create_session(user.uuid)
         _added_session = await self._login_session_repository.add(session)
 
         cookie_data = session_cookie_config.model_dump() | {

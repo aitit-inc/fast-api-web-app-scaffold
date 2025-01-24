@@ -92,7 +92,8 @@ class InDBBaseEntityRepository(
                      *args: Any, **kwargs: Any,
                      ) -> None:
         """Delete the entity with the specified ID."""
-        existing_entity = await self.get_by_id(entity_id)
+        existing_entity = await self.get_by_id(entity_id,
+                                               include_deleted=True)
         if existing_entity:
             await self._db_session.delete(existing_entity)
             await self._db_session.flush()

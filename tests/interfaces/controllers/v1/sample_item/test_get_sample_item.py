@@ -1,7 +1,7 @@
-"""Test case for the list_sample_items endpoint of sample_items controller."""
+"""Test cases for the get sample item endpoint."""
 import json
 from datetime import datetime
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Any
 
 import pytest
 import pytest_asyncio
@@ -33,29 +33,44 @@ async def client(request: pytest.FixtureRequest) -> AsyncGenerator[
         yield client_
 
 
+@pytest.mark.parametrize(
+    'query, expected',
+    [
+        ({}, {
+            'name': 'Sample item 1',
+            'description': '1',
+            'uuid': 'dummy',
+            'created_at': '2025-01-01T00:00:00',
+            'updated_at': '2025-01-01T00:00:00',
+            'deleted_at': None,
+        }),
+        ({'with_meta': True}, {
+            'name': 'Sample item 1',
+            'description': '1',
+            'uuid': 'dummy',
+            'created_at': '2025-01-01T00:00:00',
+            'updated_at': '2025-01-01T00:00:00',
+            'deleted_at': None,
+            'meta_data': {
+                'name_length': 13,
+                'description_length': 1,
+            },
+        }),
+    ],
+)
 @pytest.mark.asyncio
-async def test_list_sample_items__verify_ok__returns_ok(
+async def test_get_sample_item__verify_ok__returns_ok(
         client: AsyncClient,  # pylint: disable=redefined-outer-name
+        query: dict[str, Any], expected: dict[str, Any],
 ) -> None:
-    """Test list AI models."""
-    response = await client.get(f'{API_BASE}/sample-items/')
+    """Test get sample item."""
+    response = await client.get(
+        f'{API_BASE}/sample-items/1',
+        params=query, )
     print(json.dumps(response.json(), indent=4, ensure_ascii=False))
     assert response.status_code == 200
     response_json = response.json()
     assert mock_overwrite_datetime(
-        response_json, datetime(2025, 1, 1, 0, 0, 0)) == {
-               'items': [
-                   {
-                       'uuid': 'dummy',
-                       'name': 'Sample item 1',
-                       'updated_at': '2025-01-01T00:00:00',
-                       'deleted_at': None,
-                       'created_at': '2025-01-01T00:00:00',
-                       'description': '1'
-                   }
-               ],
-               'total': 1,
-               'page': 1,
-               'size': 50,
-               'pages': 1
-           }
+        response_json,
+        datetime(2025, 1, 1, 0, 0, 0)
+    ) == expected

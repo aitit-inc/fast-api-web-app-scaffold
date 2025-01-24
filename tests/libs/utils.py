@@ -1,14 +1,18 @@
 """Utility functions for testing."""
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable, Generator
 
+from passlib.context import CryptContext
 from sqlalchemy import delete, create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
-from app.domain.entities.sample_item import SampleItem
 from app.config import Settings
+from app.domain.entities.login_session import LoginSession
+from app.domain.entities.sample_item import SampleItem
+from app.domain.entities.user import User
 
 API_BASE = '/api/v1'
 
@@ -34,11 +38,27 @@ def reset_id_seq(db_session: Session, seq: int | None = None) -> None:
 
 def reset_tables(db_session: Session) -> None:
     """Reset all tables."""
-    entities = [SampleItem]
+    entities = [SampleItem, LoginSession, User]
     for entity in entities:
         db_session.execute(delete(entity))
 
     reset_id_seq(db_session)
+
+
+def add_super_user(db_session: Session) -> None:
+    """Add super user."""
+    pwd_context = CryptContext(
+        schemes=['bcrypt'], deprecated='auto')
+    db_session.add(
+        User(
+            id=1,
+            uuid='dummy',
+            email='admin@fawapp.com',
+            password_hash=pwd_context.hash('test123'),
+            is_active=True,
+            is_superuser=True,
+        )
+    )
 
 
 def mock_overwrite_datetime(
@@ -77,3 +97,27 @@ def mock_overwrite_datetime(
         elif isinstance(value, list):
             data[key] = [mock_overwrite_datetime(item, dt) for item in value]
     return data
+
+
+@contextmanager
+def init_and_autocommit_session(
+        config: Settings) -> Generator[Session, None, None]:
+    """reset db and autocommit_session """
+    with Session(bind=db_engine(config)) as db_session:
+        reset_tables(db_session)
+
+        try:
+            yield db_session
+        finally:
+            db_session.commit()
+
+
+def define_cleanup(config: Settings) -> Callable[[], None]:
+    """ define_cleanup """
+
+    def cleanup() -> None:
+        with Session(bind=db_engine(config)) as db_session:
+            reset_tables(db_session)
+            db_session.commit()
+
+    return cleanup

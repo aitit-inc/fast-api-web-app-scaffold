@@ -11,9 +11,9 @@ from fastapi.openapi.utils import get_openapi
 from app.config import get_settings
 from app.di_container import Container
 from app.interfaces.controllers.base import router
-from app.interfaces.middlewares.error_handlers import app_error_handlers
-from app.interfaces.middlewares.token_auth_middleware import \
+from app.interfaces.middlewares.auth_middleware import \
     AuthorizationMiddleware
+from app.interfaces.middlewares.error_handlers import app_error_handlers
 
 logger = getLogger('uvicorn')
 
@@ -63,7 +63,8 @@ def create_app() -> FastAPI:
         AuthorizationMiddleware,
         access_token_authorizer=container.access_token_authorizer(),
         session_cookie_authorizer= \
-            container.session_cookie_authorizer_factory()(_db.session),
+            container.session_cookie_authorizer_factory(
+            )(_db.session),  # type: ignore
         auth_method=config.auth_method,
     )
 

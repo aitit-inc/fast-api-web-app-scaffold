@@ -10,7 +10,6 @@ from app.domain.services.auth.login_session import LoginSessionService
 from app.domain.services.time import to_utc
 
 
-# TODO: Change to LoginSessionFactory instead of a service
 class LoginSessionServiceImpl(
     LoginSessionService,
 ):
@@ -29,9 +28,9 @@ class LoginSessionServiceImpl(
         self._get_now = get_now
         self._uuid_gen = uuid_gen
 
-    async def create_session(self, user_identifier: str) -> LoginSession:
+    def create_session(self, user_identifier: str) -> LoginSession:
         serializer = URLSafeSerializer(self._login_session_secret_key)
-        session_unique_str = self._uuid_gen()
+        session_unique_str = self._gen_uuid()
         session_data = SessionData(
             user_id=user_identifier,
             session_unique_str=session_unique_str,
@@ -48,3 +47,11 @@ class LoginSessionServiceImpl(
             session_unique_str=session_unique_str,
             expires_at=expires_at,
         )
+
+    def decode_session(self, session_id: str) -> SessionData:
+        serializer = URLSafeSerializer(self._login_session_secret_key)
+        session_data = serializer.loads(session_id)
+        return SessionData(**session_data)
+
+    def _gen_uuid(self) -> str:
+        return self._uuid_gen()

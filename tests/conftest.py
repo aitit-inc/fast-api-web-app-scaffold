@@ -1,7 +1,9 @@
 """Pytest configuration file for the trainer_manager app."""
+import asyncio
 import os
 import time
 
+import pytest
 from dotenv import load_dotenv
 from pytest import Config
 
@@ -20,7 +22,14 @@ def pytest_configure(config: Config) -> None:
     time.tzset()  # Set the timezone
 
     # Load environment variables from .env.test file
-    load_dotenv(dotenv_path='app/.env.test')
+    load_dotenv(dotenv_path='app/.env.test', override=True)
+    # [NOTE]: This print is required to ensure they are loaded to env.
+    print('os.environ: ', os.environ)
 
-    # Set test DB DSN
-    os.environ['DB_DSN'] = os.getenv('DB_DSN', 'default_dsn_value')
+
+@pytest.fixture(scope="session")
+def event_loop():  # type: ignore
+    """Create a single event loop for all tests."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
