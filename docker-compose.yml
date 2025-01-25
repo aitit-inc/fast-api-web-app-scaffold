@@ -1,5 +1,5 @@
 x-health: &default-healthcheck
-  interval: 10s
+  interval: 60s
   timeout: 30s
   retries: 2
 

@@ -10,7 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from app.application.exc import Unauthorized
-from app.domain.entities.login_session import SessionData
+from app.domain.entities.login_session import LoginSession
 from app.domain.services.auth.token import JwtPayload
 from app.interfaces.controllers.path import API_BASE_PATH, API_V1_PATH, \
     HEALTH_CHECK_ENDPOINT
@@ -123,9 +123,9 @@ def get_token_payload(request: Request) -> JwtPayload:
     return cast(JwtPayload, request.state.payload)
 
 
-def get_session_payload(request: Request) -> SessionData:
+def get_session(request: Request) -> LoginSession:
     """Get session payload."""
-    if not hasattr(request.state, 'payload'):
+    if not hasattr(request.state, 'session'):
         raise HTTPException(status_code=401, detail='Unauthorized')
 
-    return cast(SessionData, request.state.payload)
+    return cast(LoginSession, request.state.session)

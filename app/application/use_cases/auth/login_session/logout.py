@@ -21,8 +21,16 @@ class LogoutUseCase(
 
     async def __call__(
             self,
-            session_id: str,
+            session_id: str | None,
             *args: Any,
             **kwargs: Any,
     ) -> None:
+        """Execute logout use case."""
+        if session_id is None:
+            logger.warning('Failed to extract session_id from cookies.')
+
+            # During logout, even if the request is invalid and does not
+            # contain a session, no error will be returned to the client.
+            return
+
         await self._login_session_repository.delete(session_id)

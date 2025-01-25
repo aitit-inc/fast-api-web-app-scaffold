@@ -8,14 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.dto.session_auth import LoginRequest, SessionCookieConfig
 from app.application.use_cases.auth.login_session.login import LoginUseCase
 from app.application.use_cases.auth.login_session.logout import LogoutUseCase
-from app.domain.entities.login_session import SessionData
+from app.domain.entities.login_session import LoginSession
 from app.domain.repositories.login_session import LoginSessionRepository
 from app.domain.repositories.user import UserByEmailRepository
 from app.domain.services.auth.base import UserAuthService
 from app.domain.services.auth.login_session import LoginSessionService
 from app.interfaces.controllers.v1.path import AUTH_SESSION_PREFIX, \
     SESSION_LOGIN_ENDPOINT
-from app.interfaces.middlewares.auth_middleware import get_session_payload
+from app.interfaces.middlewares.auth_middleware import get_session
 
 router = APIRouter(
     prefix=AUTH_SESSION_PREFIX,
@@ -102,22 +102,20 @@ async def login(
 @router.get('/verify')
 @inject
 async def verify(
-        session_payload: SessionData = Depends(
-            get_session_payload,
+        session: LoginSession = Depends(
+            get_session,
         )
-) -> SessionData:
+) -> LoginSession:
     """
     Verifies the validity of the current session.
     
     This endpoint checks if the user's session is valid by decoding and
-    verifying the session payload. It demonstrates how to perform basic
-    session authorization, ensuring the request is authenticated.
-
+    verifying the session object provided.
+    
     Args:
-        session_payload (SessionData): The session payload extracted from the
-            request.
+        session (LoginSession): The session object extracted from the request.
     """
-    return session_payload
+    return session
 
 
 @router.post('/logout')

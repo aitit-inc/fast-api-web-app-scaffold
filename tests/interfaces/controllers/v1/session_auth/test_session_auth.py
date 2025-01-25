@@ -7,7 +7,6 @@ import pytest
 import pytest_asyncio
 from freezegun import freeze_time
 from httpx import AsyncClient, ASGITransport
-from itsdangerous import URLSafeSerializer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -36,16 +35,18 @@ async def client(request: pytest.FixtureRequest) -> typing.AsyncGenerator[
 
 @pytest.mark.asyncio
 @freeze_time('2025-01-02 00:00:00')
-async def test_session_login__verify_ok__return_ok(
+async def test_session_auth__verify_ok__return_ok(
         monkeypatch: pytest.MonkeyPatch,
         client: AsyncClient,  # pylint: disable=redefined-outer-name
 ) -> None:
-    """Test session login."""
-    session_unique_str = 'unique_str'
+    """Test session auth."""
+
+    # TEST SESSION LOGIN ======================================================
+    mock_session_id = 'mock_session_id'
     monkeypatch.setattr(
         'app.infrastructure.services.login_session.'
-        'LoginSessionServiceImpl._gen_uuid',
-        lambda *args, **kwargs: session_unique_str,
+        'LoginSessionServiceImpl._generate_session_id',
+        lambda *args, **kwargs: mock_session_id,
     )
     response = await client.post(
         f'{API_BASE}/auth/session/login',
@@ -57,12 +58,8 @@ async def test_session_login__verify_ok__return_ok(
     assert response.status_code == 200
     assert 'session' in response.cookies
     session_id = response.cookies['session']
+    assert session_id == mock_session_id
     config = get_settings_for_testing()
-    serializer = URLSafeSerializer(
-        config.login_session_secret_key,
-    )
-    decoded = serializer.loads(session_id)
-    assert decoded['user_id'] == 'dummy'
 
     with Session(bind=db_engine(config)) as db_session:
         session_entity: LoginSession = db_session.execute(
@@ -71,15 +68,12 @@ async def test_session_login__verify_ok__return_ok(
             )
         ).scalars().one()
 
-    assert decoded['session_unique_str'] == session_unique_str
-
     assert mock_overwrite_datetime(
         session_entity.model_dump(),
         datetime(2025, 1, 1, 0, 0, 0),
     ) == {
                'id': session_id,
                'user_id': 'dummy',
-               'session_unique_str': session_unique_str,
                'expires_at': datetime(2025, 1, 9, 0, 0, 0,
                                       tzinfo=timezone.utc),
                'created_at': '2025-01-01T00:00:00',
@@ -87,17 +81,26 @@ async def test_session_login__verify_ok__return_ok(
                'deleted_at': None,
            }
 
+    # TEST SESSION VERIFICATION ===============================================
     response2 = await client.get(
         f'{API_BASE}/auth/session/verify',
         cookies={'session': session_id},
     )
     print(json.dumps(response2.json(), indent=4, ensure_ascii=False))
     assert response2.status_code == 200
-    assert response2.json() == {
-        'user_id': 'dummy',
-        'session_unique_str': session_unique_str,
-    }
+    assert mock_overwrite_datetime(
+        response2.json(),
+        datetime(2025, 1, 1, 0, 0, 0),
+    ) == {
+               'id': session_id,
+               'user_id': 'dummy',
+               'expires_at': '2025-01-09T00:00:00Z',
+               'created_at': '2025-01-01T00:00:00',
+               'updated_at': '2025-01-01T00:00:00',
+               'deleted_at': None,
+           }
 
+    # TEST SESSION LOGOUT =====================================================
     response3 = await client.post(
         f'{API_BASE}/auth/session/logout',
         cookies={'session': session_id},

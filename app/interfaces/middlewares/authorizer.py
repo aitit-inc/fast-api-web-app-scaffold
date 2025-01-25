@@ -7,7 +7,6 @@ from typing import Callable
 from fastapi import Request
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from itsdangerous import BadSignature, BadData, SignatureExpired
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.exc import Unauthorized
@@ -118,14 +117,7 @@ class SessionCookieAuthorizer(AuthorizerBase):
                         'Failed to get session from DB by session_id.')
                     raise Unauthorized('Invalid or missing session.')
 
-                try:
-                    session_data = self._login_session_service.decode_session(
-                        session_id)
-                except (BadSignature, BadData, SignatureExpired) as err:
-                    logger.warning('Invalid session: %s', err)
-                    raise Unauthorized('Invalid or missing session.') from err
-
-            request.state.user_id = session_data.user_id
-            request.state.payload = session_data
+            request.state.user_id = session.user_id
+            request.state.session = session
 
             return request

@@ -116,7 +116,6 @@ class Container(containers.DeclarativeContainer):
         login_session_secret_key=conf.login_session_secret_key,
         login_session_expire_minutes=conf.login_session_expire_minutes,
         get_now=get_now,
-        uuid_gen=uuid,
     )
     login_session_cookie_name = providers.Object(
         conf.login_session_cookie_name,

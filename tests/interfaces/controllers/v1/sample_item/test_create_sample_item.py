@@ -40,7 +40,7 @@ async def test_create_sample_item__verify_ok__return_ok(
     monkeypatch.setattr(
         'app.application.use_cases.sample_item.create.'
         'SampleItemCreateUseCase._gen_uuid',
-        lambda: 'dummy',
+        lambda *args, **kwargs: 'dummy',
     )
     response = await client.post(
         f'{API_BASE}/sample-items/',

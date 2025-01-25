@@ -33,7 +33,7 @@ async def client(request: pytest.FixtureRequest) -> typing.AsyncGenerator[
 
 @pytest.mark.asyncio
 # @freeze_time('2025-01-02 00:00:00')
-async def test_token_login__verify_ok__return_ok(
+async def test_token_auth__verify_ok__return_ok(
         monkeypatch: pytest.MonkeyPatch,
         client: AsyncClient,  # pylint: disable=redefined-outer-name
 ) -> None:
