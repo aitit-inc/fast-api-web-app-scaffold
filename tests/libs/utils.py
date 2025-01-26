@@ -12,7 +12,8 @@ from sqlalchemy.sql import text
 from app.config import Settings
 from app.domain.entities.login_session import LoginSession
 from app.domain.entities.sample_item import SampleItem
-from app.domain.entities.user import User
+from app.domain.entities.user import User, RolePermissions, UserRoles, \
+    Permission, Role
 
 API_BASE = '/api/v1'
 
@@ -29,6 +30,9 @@ def reset_id_seq(db_session: Session, seq: int | None = None) -> None:
     seq = 1 if not seq else seq
     id_seq_list = [
         'sample_items_id_seq',
+        'users_id_seq',
+        'roles_id_seq',
+        'permissions_id_seq',
     ]
     for id_seq in id_seq_list:
         statement = text(
@@ -38,7 +42,8 @@ def reset_id_seq(db_session: Session, seq: int | None = None) -> None:
 
 def reset_tables(db_session: Session) -> None:
     """Reset all tables."""
-    entities = [SampleItem, LoginSession, User]
+    entities = [SampleItem, LoginSession, RolePermissions, UserRoles,
+                Permission, Role, User]
     for entity in entities:
         db_session.execute(delete(entity))
 

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Callable
 
 from app.domain.entities.login_session import LoginSession
+from app.domain.entities.user import User
 from app.domain.services.auth.login_session import LoginSessionService
 from app.domain.services.time import to_utc
 
@@ -24,7 +25,7 @@ class LoginSessionServiceImpl(
         self._login_session_expire_minutes = login_session_expire_minutes
         self._get_now = get_now
 
-    def create_session(self, user_identifier: str) -> LoginSession:
+    def create_session(self, user: User) -> LoginSession:
         session_id = self._generate_session_id()
 
         now = to_utc(self._get_now())
@@ -33,7 +34,8 @@ class LoginSessionServiceImpl(
 
         return LoginSession(
             id=session_id,
-            user_id=user_identifier,
+            user_id=user.id,
+            user_uuid=user.uuid,
             expires_at=expires_at,
         )
 

@@ -58,7 +58,7 @@ class AccessTokenAuthorizer(AuthorizerBase):
 
         payload = self._jwt_token_service.verify_token(token)
 
-        request.state.user_id = payload.sub
+        request.state.user_uuid = payload.sub
         request.state.payload = payload
 
         return request
@@ -118,6 +118,7 @@ class SessionCookieAuthorizer(AuthorizerBase):
                     raise Unauthorized('Invalid or missing session.')
 
             request.state.user_id = session.user_id
+            request.state.user_uuid = session.user_uuid
             request.state.session = session
 
             return request

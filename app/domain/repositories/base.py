@@ -23,7 +23,9 @@ class AsyncBaseRepository(
 
     @abstractmethod
     async def get_by_id(self, entity_id: IdT,
-                        *args: Any, **kwargs: Any) -> EntityT | None:
+                        *args: Any,
+                        load_options: list[Any] | None = None,
+                        **kwargs: Any) -> EntityT | None:
         """Retrieve an entity by its ID"""
 
     @abstractmethod

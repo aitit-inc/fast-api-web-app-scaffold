@@ -73,7 +73,8 @@ async def test_session_auth__verify_ok__return_ok(
         datetime(2025, 1, 1, 0, 0, 0),
     ) == {
                'id': session_id,
-               'user_id': 'dummy',
+               'user_id': 1,
+               'user_uuid': 'dummy',
                'expires_at': datetime(2025, 1, 9, 0, 0, 0,
                                       tzinfo=timezone.utc),
                'created_at': '2025-01-01T00:00:00',
@@ -93,7 +94,8 @@ async def test_session_auth__verify_ok__return_ok(
         datetime(2025, 1, 1, 0, 0, 0),
     ) == {
                'id': session_id,
-               'user_id': 'dummy',
+               'user_id': 1,
+               'user_uuid': 'dummy',
                'expires_at': '2025-01-09T00:00:00Z',
                'created_at': '2025-01-01T00:00:00',
                'updated_at': '2025-01-01T00:00:00',

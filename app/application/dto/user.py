@@ -6,8 +6,8 @@ from pydantic import Field as PydanticField
 from sqlmodel import SQLModel, Field
 
 from app.application.dto.base import ApiListQueryDtoBaseModel
-from app.domain.entities.common import MAX_LEN_SHORT
-from app.domain.entities.user import UserBase, User
+from app.domain.entities.common import LEN_256
+from app.domain.entities.user import UserBase, User, Role
 
 
 class UserCreate(UserBase):
@@ -26,11 +26,16 @@ class UserReadDto(UserBase):
     deleted_at: datetime | None = None
 
 
+class UserReadDtoWithRelated(UserReadDto):
+    """User entity read."""
+    roles: list[Role] = []
+
+
 class UserUpdate(SQLModel):
     """User entity update."""
     last_login: datetime | None = None
-    first_name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
-    last_name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
+    first_name: str | None = Field(max_length=LEN_256, default=None)
+    last_name: str | None = Field(max_length=LEN_256, default=None)
 
 
 class UserApiListQueryDto(ApiListQueryDtoBaseModel):

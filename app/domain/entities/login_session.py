@@ -11,7 +11,8 @@ class LoginSession(SQLModel, table=True):
     """Login session entity."""
     __tablename__ = "login_sessions"
     id: str = Field(max_length=128, primary_key=True, index=True)
-    user_id: str = Field(nullable=False)
+    user_id: int = Field(nullable=False)
+    user_uuid: str = Field(nullable=False)
     expires_at: datetime = DatetimeWithTimeZone(nullable=False)
 
     created_at: datetime | None = DatetimeWithTimeZone(

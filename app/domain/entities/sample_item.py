@@ -5,14 +5,14 @@ from pydantic import BaseModel
 from sqlalchemy.sql import func
 from sqlmodel import Field, SQLModel
 
-from app.domain.entities.common import MAX_LEN_SHORT, \
+from app.domain.entities.common import LEN_256, \
     DatetimeWithTimeZone
 
 
 class SampleItemBase(SQLModel):
     """SampleItem entity base class."""
     name: str = Field(
-        max_length=MAX_LEN_SHORT, nullable=False,
+        max_length=LEN_256, nullable=False,
         description='SampleItem name, description for pydantic and openapi',
         sa_column_kwargs={'comment': 'SampleItem name, comment for db'}
     )

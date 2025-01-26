@@ -5,7 +5,7 @@ from fastapi import Query
 from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import SQLModel, Field
 
-from app.domain.entities.common import MAX_LEN_SHORT
+from app.domain.entities.common import LEN_256
 from app.domain.entities.sample_item import SampleItemBase, \
     SampleItemLengths, SampleItem
 from app.application.dto.base import ApiListQueryDtoBaseModel
@@ -17,7 +17,7 @@ class SampleItemCreate(SampleItemBase):
 
 class SampleItemUpdateDto(SQLModel):
     """SampleItem entity update."""
-    name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
+    name: str | None = Field(max_length=LEN_256, default=None)
     description: str | None = None
 
 

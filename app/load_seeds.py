@@ -26,6 +26,7 @@ async def load_seeds(test: bool) -> None:
         seed_dir=config.seed_dir,
     )
     await db.load_seeds(init_db=True)
+    await db.adjust_all_sequences()
 
 
 @click.command()

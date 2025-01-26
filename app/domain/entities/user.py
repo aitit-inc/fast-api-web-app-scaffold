@@ -3,17 +3,27 @@ from datetime import datetime
 
 from pydantic import EmailStr
 from sqlalchemy.sql import func
-from sqlmodel import SQLModel, Field, AutoString
+from sqlmodel import SQLModel, Field, AutoString, Relationship
 
-from app.domain.entities.common import MAX_LEN_SHORT, DatetimeWithTimeZone
+from app.domain.entities.common import LEN_256, DatetimeWithTimeZone
 
 
 class UserBase(SQLModel):
     """User entity base."""
-    first_name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
-    last_name: str | None = Field(max_length=MAX_LEN_SHORT, default=None)
+    first_name: str | None = Field(max_length=LEN_256, default=None)
+    last_name: str | None = Field(max_length=LEN_256, default=None)
     email: EmailStr = Field(
         unique=True, index=True, nullable=False, sa_type=AutoString)
+
+
+class UserRoles(SQLModel, table=True):
+    """UserRoles entity."""
+    __tablename__ = "user_roles"
+    """Value object to represent roles of User."""
+    user_id: int = Field(foreign_key="users.id", primary_key=True,
+                         nullable=False)
+    role_id: int = Field(foreign_key="roles.id", primary_key=True,
+                         nullable=False)
 
 
 class User(UserBase, SQLModel, table=True):
@@ -30,6 +40,9 @@ class User(UserBase, SQLModel, table=True):
     last_login: datetime | None = DatetimeWithTimeZone(
         default=None,
     )
+    roles: list["Role"] = Relationship(
+        back_populates="users", link_model=UserRoles,
+    )
 
     created_at: datetime | None = DatetimeWithTimeZone(
         server_default=func.now(),  # pylint: disable=not-callable
@@ -42,3 +55,51 @@ class User(UserBase, SQLModel, table=True):
         onupdate=func.now(),  # pylint: disable=not-callable
     )
     deleted_at: datetime | None = DatetimeWithTimeZone(default=None)
+
+
+class RolePermissions(SQLModel, table=True):
+    """RolePermissions entity."""
+    __tablename__ = "role_permissions"
+    """Value object to represent roles and permissions of User."""
+    role_id: int = Field(foreign_key="roles.id", primary_key=True,
+                         nullable=False)
+    permission_id: int = Field(foreign_key="permissions.id", primary_key=True,
+                               nullable=False)
+
+
+class Role(SQLModel, table=True):
+    """Roles entity."""
+    __tablename__ = "roles"
+    """Value object to represent roles of User."""
+    id: int = Field(primary_key=True)
+    name: str = Field(max_length=LEN_256, unique=True, nullable=False)
+    description: str | None = Field(
+        nullable=True,
+        description='Role description for pydantic and openapi',
+        sa_column_kwargs={'comment': 'Role description for db'}
+    )
+    users: list["User"] = Relationship(
+        back_populates="roles", link_model=UserRoles,
+    )
+    permissions: list["Permission"] = Relationship(
+        back_populates="roles", link_model=RolePermissions,
+    )
+
+
+SUPER_USER = 'super'
+
+
+class Permission(SQLModel, table=True):
+    """Permissions entity."""
+    __tablename__ = "permissions"
+    """Value object to represent permissions of User."""
+    id: int = Field(primary_key=True)
+    name: str = Field(max_length=LEN_256, unique=True, nullable=False)
+    description: str | None = Field(
+        nullable=True,
+        description='Permission description for pydantic and openapi',
+        sa_column_kwargs={'comment': 'Permission description for db'}
+    )
+    roles: list[Role] = Relationship(
+        back_populates="permissions", link_model=RolePermissions,
+    )

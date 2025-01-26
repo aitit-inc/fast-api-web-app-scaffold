@@ -21,6 +21,7 @@ from app.infrastructure.services.token_auth import InDBUserTokenAuthService, \
     JwtTokenServiceImpl
 from app.interfaces.middlewares.authorizer import AccessTokenAuthorizer, \
     SessionCookieAuthorizer
+from app.interfaces.middlewares.permission_checker import PermissionChecker
 
 logger = logging.getLogger('uvicorn')
 
@@ -138,4 +139,9 @@ class Container(containers.DeclarativeContainer):
         login_session_repository_factory=login_session_repository_factory,
         login_session_service=login_session_service,
         login_session_cookie_name=conf.login_session_cookie_name,
+    )
+    permission_checker = providers.Factory(
+        PermissionChecker,
+        session_factory=db_session_factory,
+        user_by_uuid_repository_factory=user_by_uuid_repository,
     )

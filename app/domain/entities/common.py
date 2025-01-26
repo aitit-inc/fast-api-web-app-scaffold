@@ -23,4 +23,8 @@ def DatetimeWithTimeZone(
     return Field(*args, **kwargs)
 
 
-MAX_LEN_SHORT = 256
+LEN_64 = 64
+LEN_128 = 128
+LEN_256 = 256
+LEN_512 = 512
+LEN_1024 = 1024

@@ -1,0 +1,5 @@
+id,name,description
+1,admin:read,
+2,admin:write,
+3,admin:update,
+4,admin:delete,

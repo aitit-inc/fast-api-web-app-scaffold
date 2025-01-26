@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     token_secret_key: str = 'you_must_change_this_key'
     token_algorithm: str = 'HS256'
 
+    # FOR TEST ONLY
+    pass_hash_for_test: str = 'pass_hash_for_test_auth'
+
     @property
     def log_level(self) -> int:
         """Get log level."""

@@ -63,7 +63,12 @@ class Database:
 
         async def import_csv(csv_file: Path) -> None:
             """Import a CSV file into the database using asyncpg."""
-            table_name = csv_file.stem
+
+            def _get_table_name(csv_file: Path) -> str:
+                _, table_name_ = csv_file.stem.split('_', 1)
+                return table_name_
+
+            table_name = _get_table_name(csv_file)
             if table_name == 'user':
                 # 'user' is a reserved word, so it is enclosed in quotes
                 table_name = '"user"'
@@ -88,7 +93,41 @@ class Database:
             finally:
                 await import_csv_conn.close()
 
-        seed_files = glob.glob(str(self._seed_dir / '*.csv'))
+        seed_files = sorted(glob.glob(str(self._seed_dir / '*.csv')))
         for seed_file in seed_files:
-            logger.info("Importing seed file: %s", seed_file)
+            logger.info('Importing seed file: %s', seed_file)
             await import_csv(Path(seed_file))
+
+    async def _reset_sequence(
+            self, table_name: str, id_column: str = 'id') -> None:
+        """Adjust the auto-increment sequence for a table."""
+        dsn = self._dsn.replace('+asyncpg', '')
+        reset_conn: Connection[Any] = await asyncpg.connect(dsn)
+        try:
+            # Get the maximum id value from the table
+            max_id_query = f'SELECT MAX({id_column}) FROM {table_name}'
+            max_id_row = await reset_conn.fetchrow(max_id_query)
+
+            # Default to 0 if table is empty
+            max_id = max_id_row[0] or 0  # type: ignore
+
+            # Reset the sequence to max_id + 1
+            sequence_name = f'{table_name}_{id_column}_seq'
+            reset_sequence_query = \
+                f"SELECT setval('{sequence_name}', $1, false)"
+            await reset_conn.execute(reset_sequence_query, max_id + 1)
+
+        finally:
+            await reset_conn.close()
+
+    async def adjust_all_sequences(self) -> None:
+        """Adjust all sequences after loading seeds."""
+        table_names = [
+            ('users', 'id'),
+            ('roles', 'id'),
+            ('permissions', 'id'),
+            ('sample_items', 'id'),
+        ]
+        for table_name, id_col in table_names:
+            logger.info('adjust sequence of %s', table_name)
+            await self._reset_sequence(table_name, id_column=id_col)

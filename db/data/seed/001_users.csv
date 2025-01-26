@@ -1,0 +1,4 @@
+first_name,last_name,email,id,uuid,password_hash,is_active,is_superuser,last_login,created_at,updated_at,deleted_at
+Super,Fawapp,super@fawapp.com,1,Z4WfLWcprv9g5tgB4h5U2v,$2b$12$P09.GgPOj7QIJgZdK802GukV3cvp.66uP58D1HWFtN.GtTBwjowvK,true,true,,2025-01-15 23:30:12.713000 +00:00,2025-01-25 09:57:09.676990 +00:00,
+Admin,Fawapp,admin@fawapp.com,2,YJq7QMwqFgcXbUBLgETgE7,$2b$12$1kdgTBOLjdyXraIE3pA3yeO59lo3m58Z/4cf3mODrrbWvjszUsvSm,true,false,,2025-01-25 09:57:24.607164 +00:00,2025-01-25 09:57:24.607164 +00:00,
+User,Fawapp,user@fawapp.com,3,3gbBAdMSEapubtUmkPFTUq,$2b$12$rlUiq0azE6FEWvwCYsi.l.Nrss2cYf7EE5v68jjZQhdDuAYjHNtq6,true,false,,2025-01-25 09:57:31.588176 +00:00,2025-01-25 09:57:31.588176 +00:00,

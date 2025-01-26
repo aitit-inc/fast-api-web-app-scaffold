@@ -14,6 +14,10 @@ from app.application.use_cases.user.create import UserCreateUseCase
 from app.application.use_cases.user.list import UserListUseCase
 from app.domain.repositories.user import UserQueryFactory, UserByUUIDRepository
 from app.domain.services.auth.base import UserAuthService
+from app.domain.value_objects.role_permision import PermissionName
+from app.interfaces.middlewares.auth_middleware import get_user_uuid
+from app.interfaces.middlewares.permission_checker import PermissionChecker, \
+    permission_required
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
@@ -24,6 +28,7 @@ router = APIRouter(
 
 @router.get('/', responses={400: {'model': ErrorJsonResponse}})
 @inject
+@permission_required([PermissionName.ADMIN_READ])
 async def users(
         query: UserApiListQueryDto = Depends(),
         params: Params = Depends(),
@@ -31,10 +36,13 @@ async def users(
             Provide['db_session_factory']),
         user_query_factory: UserQueryFactory = Depends(
             Provide['user_query_factory']),
+        _user_uuid: str = Depends(get_user_uuid),
+        _permission_checker: PermissionChecker = Depends(
+            Provide['permission_checker']),
 ) -> Page[UserReadDto]:
     """
     Retrieves a paginated list of users based on the query parameters provided.
-    
+
     Args:
         query (UserApiListQueryDto): The query data transfer object for
             filtering users.
@@ -43,7 +51,11 @@ async def users(
             create an asynchronous SQLAlchemy session.
         user_query_factory (UserQueryFactory): Factory for constructing user
             queries.
-    
+        _user_uuid (str): The UUID of the user making the request.
+        _permission_checker (PermissionChecker): A dependency for checking
+            permissions. This is injected automatically by FastAPI's
+            dependency injection system.
+
     Returns:
         Page[UserReadDto]: A paginated list of users represented as
             UserReadDto instances.
@@ -64,6 +76,7 @@ async def users(
 @router.post('/', status_code=201,
              responses={400: {'model': ErrorJsonResponse}})
 @inject
+@permission_required([PermissionName.ADMIN_WRITE])
 async def create_user(
         data: UserCreate,
         session_factory: Callable[[], AsyncSession] = Depends(
@@ -74,6 +87,9 @@ async def create_user(
         user_auth_service_factory: Callable[
             [UserByUUIDRepository], UserAuthService] = Depends(
             Provide['user_auth_service_factory']),
+        _user_uuid: str = Depends(get_user_uuid),
+        _permission_checker: PermissionChecker = Depends(
+            Provide['permission_checker']),
 ) -> UserReadDto:
     """
     Creates a new user in the database.
@@ -87,6 +103,10 @@ async def create_user(
         user_auth_service_factory
             (Callable[[UserByUUIDRepository], UserAuthService]):
             Factory to obtain the user auth service.
+        _user_uuid (str): The UUID of the user making the request.
+        _permission_checker (PermissionChecker): A dependency for checking
+            permissions. This is injected automatically by FastAPI's
+            dependency injection system.
 
     Returns:
         UserReadDto: The newly created user data.

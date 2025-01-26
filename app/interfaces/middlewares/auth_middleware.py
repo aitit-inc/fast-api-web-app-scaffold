@@ -107,12 +107,20 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         return self._auth_method_value
 
 
-def get_user_id(request: Request) -> str:
+def get_user_id(request: Request) -> int:
     """Get user id."""
     if not hasattr(request.state, 'user_id'):
         raise HTTPException(status_code=401, detail='Unauthorized')
 
-    return cast(str, request.state.user_id)
+    return cast(int, request.state.user_id)
+
+
+def get_user_uuid(request: Request) -> str:
+    """Get user uuid."""
+    if not hasattr(request.state, 'user_uuid'):
+        raise HTTPException(status_code=401, detail='Unauthorized')
+
+    return cast(str, request.state.user_uuid)
 
 
 def get_token_payload(request: Request) -> JwtPayload:

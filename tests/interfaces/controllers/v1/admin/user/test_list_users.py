@@ -1,4 +1,4 @@
-"""Test case for the list_sample_items endpoint of sample_items controller."""
+"""Test case for the list users endpoint."""
 import json
 from datetime import datetime
 from typing import AsyncGenerator
@@ -9,9 +9,10 @@ from httpx import AsyncClient, ASGITransport
 
 from app.config import get_settings_for_testing
 from app.main import app
-from tests.libs.mocks import add_sample_item
-from tests.libs.utils import API_BASE, mock_overwrite_datetime, \
-    init_and_autocommit_session, define_cleanup
+from tests.libs.mocks import add_login_session, \
+    DUMMY_SESSION_ID1, add_default_super_user
+from tests.libs.utils import init_and_autocommit_session, define_cleanup, \
+    API_BASE, mock_overwrite_datetime
 
 
 @pytest_asyncio.fixture(scope='function')
@@ -21,9 +22,10 @@ async def client(request: pytest.FixtureRequest) -> AsyncGenerator[
     config = get_settings_for_testing()
 
     with init_and_autocommit_session(config) as db_session:
-        add_sample_item(
-            db_session,
-            uuid='dummy', name='Sample item 1', description='1',
+        add_default_super_user(db_session)
+        add_login_session(
+            db_session, id=DUMMY_SESSION_ID1,
+            user_id=1, user_uuid='dummy',
         )
 
     request.addfinalizer(define_cleanup(config))
@@ -34,25 +36,33 @@ async def client(request: pytest.FixtureRequest) -> AsyncGenerator[
 
 
 @pytest.mark.asyncio
-async def test_list_sample_items__verify_ok__returns_ok(
+async def test_list_users__verify_ok__return_ok(
         client: AsyncClient,  # pylint: disable=redefined-outer-name
 ) -> None:
-    """Test list sample items."""
-    response = await client.get(f'{API_BASE}/sample-items/')
+    """Test list users."""
+    client.cookies.set('session', DUMMY_SESSION_ID1)
+    response = await client.get(
+        f'{API_BASE}/admin/users/',
+    )
     print(json.dumps(response.json(), indent=4, ensure_ascii=False))
     assert response.status_code == 200
     response_json = response.json()
     assert mock_overwrite_datetime(
-        response_json, datetime(2025, 1, 1, 0, 0, 0)) == {
+        response_json, datetime(2025, 1, 1, 0, 0, 0),
+    ) == {
                'items': [
                    {
+                       'first_name': None,
+                       'last_name': None,
+                       'email': 'super@fawapp.com',
                        'uuid': 'dummy',
-                       'name': 'Sample item 1',
-                       'updated_at': '2025-01-01T00:00:00',
-                       'deleted_at': None,
+                       'is_active': True,
+                       'is_superuser': True,
+                       'last_login': None,
                        'created_at': '2025-01-01T00:00:00',
-                       'description': '1'
-                   }
+                       'updated_at': '2025-01-01T00:00:00',
+                       'deleted_at': None
+                   },
                ],
                'total': 1,
                'page': 1,

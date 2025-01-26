@@ -39,7 +39,9 @@ class InDBBaseEntityRepository(
         return type(self)._id_field
 
     async def get_by_id(self, entity_id: IdT, *args: Any,
-                        include_deleted: bool = False, **kwargs: Any,
+                        load_options: list[Any] | None = None,
+                        include_deleted: bool = False,
+                        **kwargs: Any,
                         ) -> EntityT | None:
         """Retrieve an entity by its ID"""
         where_clauses = [
@@ -49,8 +51,10 @@ class InDBBaseEntityRepository(
                 getattr(self._entity_cls,
                         self._deleted_at_field).is_(None))
         stmt = select(self._entity_cls).where(*where_clauses)
+        if load_options:
+            stmt = stmt.options(*load_options)
         result = await self._db_session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.scalars().unique().one_or_none()
 
     async def add(self, entity: EntityT, *args: Any, **kwargs: Any,
                   ) -> EntityT:
