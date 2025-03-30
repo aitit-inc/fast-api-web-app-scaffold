@@ -38,6 +38,7 @@ async def client(request: pytest.FixtureRequest) -> AsyncGenerator[
 async def test_logical_delete_sample_item__verify_ok__returns_ok(
         client: AsyncClient,  # pylint: disable=redefined-outer-name
 ) -> None:
+    """Test logical delete sample item."""
     response = await client.delete(
         f'{API_BASE}/public/sample-items/1/physical')
     assert response.status_code == 204
@@ -45,10 +46,8 @@ async def test_logical_delete_sample_item__verify_ok__returns_ok(
     config = get_settings_for_testing()
     with Session(bind=db_engine(config)) as db_session:
         stmt = select(SampleItem).where(
-            SampleItem.id == 1,
+            SampleItem.id == 1,  # type: ignore
         )
         sample_item = db_session.scalars(stmt).first()
 
         assert sample_item is None
-
-    return 'ok'
