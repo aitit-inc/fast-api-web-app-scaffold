@@ -15,8 +15,9 @@ from app.domain.services.auth.token import JwtPayload
 from app.interfaces.controllers.path import API_BASE_PATH, API_V1_PATH, \
     HEALTH_CHECK_ENDPOINT
 from app.interfaces.controllers.v1.path import AUTH_TOKEN_PREFIX, \
-    REFRESH_ENDPOINT, SAMPLE_ITEMS_PREFIX, SAMPLE_ITEMS_BY_UUID_PREFIX, \
-    EXPLICIT_TOKEN_ME_ENDPOINT, AUTH_SESSION_PREFIX, SESSION_LOGIN_ENDPOINT
+    REFRESH_ENDPOINT, EXPLICIT_TOKEN_ME_ENDPOINT, AUTH_SESSION_PREFIX, \
+    SESSION_LOGIN_ENDPOINT, \
+    PUBLIC_PATH
 from app.interfaces.middlewares.authorizer import AccessTokenAuthorizer, \
     SessionCookieAuthorizer, AuthMethod
 from app.interfaces.middlewares.error_handlers import \
@@ -48,10 +49,7 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         f'{API_BASE_PATH}{HEALTH_CHECK_ENDPOINT}',
 
         # Add paths to exclude from verification
-        f'{API_V1_PATH}{SAMPLE_ITEMS_PREFIX}',
-        f'{API_V1_PATH}{SAMPLE_ITEMS_PREFIX}/*',
-        f'{API_V1_PATH}{SAMPLE_ITEMS_BY_UUID_PREFIX}',
-        f'{API_V1_PATH}{SAMPLE_ITEMS_BY_UUID_PREFIX}/*',
+        f'{API_V1_PATH}{PUBLIC_PATH}/*',
         # '/some/public/paths/*',
     ]
 

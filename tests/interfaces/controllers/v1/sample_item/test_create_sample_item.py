@@ -43,7 +43,7 @@ async def test_create_sample_item__verify_ok__return_ok(
         lambda *args, **kwargs: 'dummy',
     )
     response = await client.post(
-        f'{API_BASE}/sample-items/',
+        f'{API_BASE}/public/sample-items',
         json={'name': 'Sample item 1',
               'description': '1'},
     )

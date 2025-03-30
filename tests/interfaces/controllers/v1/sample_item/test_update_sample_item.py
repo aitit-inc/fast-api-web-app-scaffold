@@ -39,7 +39,7 @@ async def test_update_sample_item__verify_ok__returns_ok(
 ) -> None:
     """Test update sample item."""
     response = await client.put(
-        f'{API_BASE}/sample-items/1',
+        f'{API_BASE}/public/sample-items/1',
         json={'name': 'updated name',
               'description': 'updated description.'},
     )

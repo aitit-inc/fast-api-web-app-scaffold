@@ -65,7 +65,7 @@ async def test_get_sample_item__verify_ok__returns_ok(
 ) -> None:
     """Test get sample item."""
     response = await client.get(
-        f'{API_BASE}/sample-items/1',
+        f'{API_BASE}/public/sample-items/1',
         params=query, )
     print(json.dumps(response.json(), indent=4, ensure_ascii=False))
     assert response.status_code == 200

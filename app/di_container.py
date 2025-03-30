@@ -37,8 +37,8 @@ class Container(containers.DeclarativeContainer):
             # V1 app endpoints
             'app.interfaces.controllers.v1.token_auth',
             'app.interfaces.controllers.v1.session_auth',
-            'app.interfaces.controllers.v1.sample_item',
-            'app.interfaces.controllers.v1.sample_item_by_uuid',
+            'app.interfaces.controllers.v1.public.sample_item',
+            'app.interfaces.controllers.v1.public.sample_item_by_uuid',
 
             # V1 app admin endpoints
             'app.interfaces.controllers.v1.admin.user',

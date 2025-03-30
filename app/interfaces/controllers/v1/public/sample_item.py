@@ -25,16 +25,17 @@ from app.application.use_cases.sample_item.update import \
     SampleItemUpdateUseCase
 from app.domain.repositories.sample_item import SampleItemRepository, \
     SampleItemQueryFactory
-from app.interfaces.controllers.v1.path import SAMPLE_ITEMS_PREFIX
+from app.interfaces.controllers.v1.path import SAMPLE_ITEMS_PREFIX, PUBLIC_PATH
 from app.interfaces.views.json_response import ErrorJsonResponse
 
 router = APIRouter(
-    prefix=SAMPLE_ITEMS_PREFIX,
+    prefix=f'{PUBLIC_PATH}',
     tags=['sample-items'],
 )
 
 
-@router.get('/', responses={400: {'model': ErrorJsonResponse}})
+@router.get(f'{SAMPLE_ITEMS_PREFIX}',
+            responses={400: {'model': ErrorJsonResponse}})
 @inject
 async def sample_item(
         with_meta: bool = False,
@@ -81,7 +82,7 @@ async def sample_item(
             )
 
 
-@router.get('/{entity_id}')
+@router.get(f'{SAMPLE_ITEMS_PREFIX}/{{entity_id}}')
 @inject
 async def sample_item_by_id(
         entity_id: int,
@@ -120,7 +121,7 @@ async def sample_item_by_id(
             return read_data
 
 
-@router.post('/', response_model=SampleItemReadDto,
+@router.post(f'{SAMPLE_ITEMS_PREFIX}', response_model=SampleItemReadDto,
              status_code=201, )
 @inject
 async def create_sample_item(
@@ -161,7 +162,8 @@ async def create_sample_item(
             return read_data
 
 
-@router.put('/{entity_id}', response_model=SampleItemReadDto)
+@router.put(f'{SAMPLE_ITEMS_PREFIX}/{{entity_id}}',
+            response_model=SampleItemReadDto)
 @inject
 async def update_sample_item(
         entity_id: int,
@@ -205,7 +207,7 @@ async def update_sample_item(
             return read_data
 
 
-@router.delete('/{entity_id}', status_code=204, )
+@router.delete(f'{SAMPLE_ITEMS_PREFIX}/{{entity_id}}', status_code=204, )
 @inject
 async def logical_delete_sample_item(
         entity_id: int,
@@ -243,7 +245,8 @@ async def logical_delete_sample_item(
             )(entity_id)
 
 
-@router.delete('/{entity_id}/physical', status_code=204, )
+@router.delete(f'{SAMPLE_ITEMS_PREFIX}/{{entity_id}}/physical',
+               status_code=204, )
 @inject
 async def physical_delete_sample_item(
         entity_id: int,

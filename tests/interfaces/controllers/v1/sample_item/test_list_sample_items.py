@@ -38,7 +38,7 @@ async def test_list_sample_items__verify_ok__returns_ok(
         client: AsyncClient,  # pylint: disable=redefined-outer-name
 ) -> None:
     """Test list sample items."""
-    response = await client.get(f'{API_BASE}/sample-items/')
+    response = await client.get(f'{API_BASE}/public/sample-items')
     print(json.dumps(response.json(), indent=4, ensure_ascii=False))
     assert response.status_code == 200
     response_json = response.json()
