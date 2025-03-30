@@ -38,7 +38,6 @@ async def client(request: pytest.FixtureRequest) -> AsyncGenerator[
 async def test_logical_delete_sample_item__verify_ok__returns_ok(
         client: AsyncClient,  # pylint: disable=redefined-outer-name
 ) -> None:
-    """Test logical delete sample item."""
     response = await client.delete(
         f'{API_BASE}/public/sample-items/1/physical')
     assert response.status_code == 204
